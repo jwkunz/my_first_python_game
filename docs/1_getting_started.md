@@ -1,10 +1,14 @@
 # Getting Started (Level 1)
 
 **Author** Dr. Jakob W. Kunzler
+
 **Contact** jake.kunzler@gmail.com
+
 **Last Updated** Oct 26 2025
+
 **License** This curriculum is distributed under the creative commons license 4.0.
-Copyright Jakob W. Kunzler 2025
+
+**Copyright Jakob W. Kunzler 2025**
 
 ## Scope
 
