@@ -346,7 +346,7 @@ This creates a new environment called **robotics** with Python 3.11 — perfect 
 Here are some useful commands you can run in **Anaconda Prompt** (Windows) or **Terminal** (Mac/Linux):
 
 | Action                        | Command                                 |
-| -- |  |
+| -- | -- |
 | Create a new environment      | `conda create --name myenv python=3.11` |
 | List all environments         | `conda env list`                        |
 | Switch to an environment      | `conda activate myenv`                  |
