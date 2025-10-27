@@ -36,7 +36,6 @@ Copyright Jakob W. Kunzler 2025</p>
 <li>45 minutes of reading</li>
 <li>15 minutes of lab</li>
 </ul>
-<hr>
 <h2 id="objectives">Objectives </h2>
 <ul>
 <li>Learn about:
@@ -51,13 +50,103 @@ Copyright Jakob W. Kunzler 2025</p>
 <li>Set up a python environment using the <a href="https://www.anaconda.com/">Anaconda</a> distribution</li>
 <li>Write a simple "Hello World" in a jupyter notebook to prove things are working</li>
 </ul>
-<hr>
 <h2 id="instructions">Instructions </h2>
-<p>Students should begin with the first parts of the lab by downloading and running the anaconda distribution.  While waiting for the installation to complete, students should read the theory section focusing on the main concepts and skipping over the small details.  Once the installer completes, students should proceed with the lab instructions to create the hello world jupyter notebook.  After creating the notebook, students should return again to the theory section and focus on the smaller details.  Students should then practice the commands described in the theory section on their own machines.</p>
-<hr>
+<ol>
+<li>Students should begin with the first parts of the lab by downloading and running the anaconda distribution.</li>
+<li>While waiting for the installation to complete, students should read the theory section focusing on the main concepts and skipping over the small details.</li>
+<li>Once the installer completes, students should proceed with the lab instructions to create the hello world jupyter notebook.</li>
+<li>After creating the notebook, students should return again to the theory section and focus on the smaller details.</li>
+<li>Lastly, students should then practice the commands described in the theory section on their own machines.</li>
+</ol>
+<h2 id="laboratory-instructions">Laboratory Instructions </h2>
+<p>This section describes to "get up" with Python using Anaconda.  If you have problems, see the troubleshooting guide at the end of this page.</p>
+<h3 id="how-to-download-and-install-anaconda">How to Download and Install Anaconda </h3>
+<p><strong>Anaconda</strong> is free and works on <strong>Windows</strong>, <strong>Mac</strong>, and <strong>Linux</strong> computers. Follow these steps to get started!</p>
+<h4 id="step-1-go-to-the-anaconda-website">Step 1: Go to the Anaconda Website </h4>
+<ol>
+<li>Open your web browser (like Chrome, Edge, or Safari).</li>
+<li>Go to the official website: <a href="https://www.anaconda.com/download">https://www.anaconda.com/download</a></li>
+<li>Click the <strong>Download</strong> button under <strong>“Anaconda Distribution.”</strong></li>
+</ol>
+<h4 id="step-2-choose-your-operating-system">Step 2: Choose Your Operating System </h4>
+<p>You’ll see options for:</p>
+<ul>
+<li><strong>Windows</strong></li>
+<li><strong>Mac</strong></li>
+<li><strong>Linux</strong></li>
+</ul>
+<p>Click on the one that matches your computer.</p>
+<h4 id="step-3-download-the-installer">Step 3: Download the Installer </h4>
+<p>Download the version for <strong>Python 3.x</strong> (the most recent version).<br>
+You can choose between:</p>
+<ul>
+<li><strong>64-Bit Graphical Installer</strong> — easiest for most users</li>
+<li><strong>64-Bit Command Line Installer</strong> — for advanced users</li>
+</ul>
+<p>Most students should pick the <strong>Graphical Installer</strong>.</p>
+<h4 id="step-4-install-on-windows">Step 4: Install on Windows </h4>
+<ol>
+<li>Double-click the downloaded <strong>.exe</strong> file.</li>
+<li>When the setup window opens, click <strong>Next</strong> and accept the license agreement.</li>
+<li>Choose <strong>Just Me</strong> unless you share the computer with others who also need Anaconda.</li>
+<li>Leave the installation location as the default, then click <strong>Next</strong>.</li>
+<li>When asked about adding Anaconda to your PATH, <strong>leave it unchecked</strong> (the installer will handle it).</li>
+<li>Click <strong>Install</strong> and wait for it to finish.</li>
+<li>Click <strong>Finish</strong> to complete the setup.</li>
+</ol>
+<h4 id="step-5-install-on-mac">Step 5: Install on Mac </h4>
+<ol>
+<li>Open the <strong>.pkg</strong> file you downloaded.</li>
+<li>Follow the on-screen steps to install.</li>
+<li>The installer will automatically set up everything you need.</li>
+<li>When it’s done, close the installer.</li>
+</ol>
+<h4 id="step-6-install-on-linux">Step 6: Install on Linux </h4>
+<ol>
+<li>
+<p>Open a <strong>terminal</strong> window.</p>
+</li>
+<li>
+<p>Navigate to the folder where you downloaded the <strong>.sh</strong> file.</p>
+</li>
+<li>
+<p>Run this command (replace the filename with the one you downloaded):</p>
+<pre data-role="codeBlock" data-info="bash" class="language-bash bash"><code><span class="token function">bash</span> Anaconda3-2025.XX-Linux-x86_64.sh
+</code></pre></li>
+<li>
+<p>Press <strong>Enter</strong> to review the license, then type <strong>yes</strong> to accept.</p>
+</li>
+<li>
+<p>Press <strong>Enter</strong> again to confirm the install location.</p>
+</li>
+<li>
+<p>When finished, close and reopen your terminal.</p>
+</li>
+<li>
+<p>Type:</p>
+<pre data-role="codeBlock" data-info="bash" class="language-bash bash"><code>conda list
+</code></pre><p>If you see a list of packages, your installation worked!</p>
+</li>
+</ol>
+<h4 id="step-7-launch-anaconda">Step 7: Launch Anaconda </h4>
+<p>After installation, open <strong>Anaconda Navigator</strong> — a friendly app that helps you launch tools like:</p>
+<ul>
+<li><strong>Jupyter Notebook</strong> (to write and run code)</li>
+<li><strong>Spyder</strong> (a professional-style coding editor)</li>
+<li><strong>Anaconda Prompt</strong> (for advanced command-line use)</li>
+</ul>
+<p>You can find Anaconda Navigator:</p>
+<ul>
+<li>On <strong>Windows</strong>: In the Start Menu under “Anaconda3”</li>
+<li>On <strong>Mac</strong>: In your Applications folder</li>
+<li>On <strong>Linux</strong>: Type <code>anaconda-navigator</code> in the terminal</li>
+</ul>
+<h4 id="youre-ready-to-code">You’re Ready to Code! </h4>
+<p>Once Anaconda opens, you can start exploring Python. Try launching <strong>Jupyter Notebook</strong> and typing:</p>
+<pre data-role="codeBlock" data-info="python" class="language-python python"><code><span class="token keyword keyword-print">print</span><span class="token punctuation">(</span><span class="token string">"Hello, Python!"</span><span class="token punctuation">)</span>
+</code></pre><p>If it prints that message — congratulations, your setup is complete!</p>
 <h2 id="theory">Theory </h2>
-<hr>
-<h3 id="what-is-python"><strong>What is Python?</strong> </h3>
+<h3 id="what-is-python">What is Python? </h3>
 <p><strong>Python</strong> is a popular computer programming language that’s known for being <strong>easy to read and easy to learn</strong>. People use Python to create all kinds of programs — from simple games and websites to advanced tools that use <strong>artificial intelligence</strong>, <strong>data science</strong>, and <strong>robotics</strong>.</p>
 <p>Unlike some programming languages that use lots of symbols and punctuation, Python uses <strong>plain English words</strong> and <strong>simple structure</strong>, which makes it great for beginners. At the same time, it’s powerful enough for professional programmers who build apps used by millions of people.</p>
 <p>With Python, you can:</p>
@@ -69,8 +158,7 @@ Copyright Jakob W. Kunzler 2025</p>
 <li>Build <strong>websites and apps</strong></li>
 </ul>
 <p>Python encourages clear thinking and creativity. Learning Python helps students understand how computers “think” and teaches valuable problem-solving skills that apply in many areas — from science and engineering to art and business.</p>
-<hr>
-<h3 id="what-is-a-python-distribution"><strong>What is a Python Distribution?</strong> </h3>
+<h3 id="what-is-a-python-distribution">What is a Python Distribution? </h3>
 <p>A <strong>Python distribution</strong> is a <strong>package</strong> that includes everything you need to start using Python — the main programming language, plus extra tools and libraries that make it easier to write and run programs.</p>
 <p>Think of it like a <strong>starter kit</strong> for coding in Python. Instead of downloading Python and all the extra parts one by one, a distribution bundles them together so you can get started right away.</p>
 <p>One of the most popular Python distributions is called <strong>Anaconda</strong>.</p>
@@ -82,17 +170,14 @@ Copyright Jakob W. Kunzler 2025</p>
 <li><strong>Conda</strong>, a tool that helps you install and manage more Python packages easily</li>
 </ul>
 <p>Anaconda makes learning and experimenting with Python simple because everything you need is already set up and ready to use. It’s a great choice for students who want to explore data, make graphs, or learn how programming connects to real-world problems.</p>
-<p>Excellent — here’s a clear, student-friendly section on <strong>using <code>conda</code> to manage and install packages</strong>, written for grades 7–12 and consistent with the tone of your previous materials.</p>
-<p>Perfect — here’s a clear, engaging explanation that teaches <strong>the difference between Jupyter Notebooks and traditional Python scripts</strong>, written for middle and high school students:</p>
-<hr>
-<h3 id="jupyter-notebooks-vs-traditional-python-scripts"><strong>Jupyter Notebooks vs. Traditional Python Scripts</strong> </h3>
+<h3 id="jupyter-notebooks-vs-traditional-python-scripts">Jupyter Notebooks vs. Traditional Python Scripts </h3>
 <p>When you write Python programs, you can do it in <strong>two main ways</strong>:</p>
 <ol>
 <li>Using a <strong>Jupyter Notebook</strong></li>
 <li>Writing a <strong>Python script</strong> (a file that ends in <code>.py</code>)</li>
 </ol>
 <p>Both use the <strong>same Python language</strong>, but they’re designed for <strong>different ways of working</strong>.</p>
-<h4 id="what-is-a-jupyter-notebook"><strong>What Is a Jupyter Notebook?</strong> </h4>
+<h4 id="what-is-a-jupyter-notebook">What Is a Jupyter Notebook? </h4>
 <p>A <strong>Jupyter Notebook</strong> is an <strong>interactive workspace</strong> where you can write code, run it, and immediately see the results — all in the same window.</p>
 <p>It’s organized into <strong>cells</strong>:</p>
 <ul>
@@ -114,7 +199,7 @@ x <span class="token operator">+</span> y
 </code></pre><p>When you run the cell, the notebook shows the answer <strong>8</strong> right below it.<br>
 You can then add another cell to explain what you did using Markdown text:</p>
 <pre data-role="codeBlock" data-info="" class="language-text"><code>This calculation adds two numbers, 5 and 3, to get 8.
-</code></pre><h4 id="what-is-a-python-script"><strong>What Is a Python Script?</strong> </h4>
+</code></pre><h4 id="what-is-a-python-script">What Is a Python Script? </h4>
 <p>A <strong>Python script</strong> is a regular <strong>text file</strong> that contains Python code from start to finish — no separate cells, no built-in notes.<br>
 These files have names like <code>hello.py</code> or <code>game.py</code>.</p>
 <p>You write your code in a <strong>code editor</strong> (like Spyder, VS Code, or IDLE), and when you’re ready, you <strong>run the entire file at once</strong>.</p>
@@ -132,8 +217,7 @@ A Python script might look like this:</p>
 greet<span class="token punctuation">(</span><span class="token string">"Student"</span><span class="token punctuation">)</span>
 </code></pre><p>When you run the script, it prints:</p>
 <pre data-role="codeBlock" data-info="" class="language-text"><code>Hello, Student!
-</code></pre><hr>
-<h4 id="-key-differences">🔍 <strong>Key Differences</strong> </h4>
+</code></pre><h4 id="key-differences">Key Differences </h4>
 <table>
 <thead>
 <tr>
@@ -175,8 +259,7 @@ greet<span class="token punctuation">(</span><span class="token string">"Student
 </tr>
 </tbody>
 </table>
-<hr>
-<h4 id="when-to-use-each"><strong>When to Use Each</strong> </h4>
+<h4 id="when-to-use-each">When to Use Each </h4>
 <ul>
 <li>
 <p>Use <strong>Jupyter Notebook</strong> when you’re:</p>
@@ -195,15 +278,11 @@ greet<span class="token punctuation">(</span><span class="token string">"Student
 </ul>
 </li>
 </ul>
-<hr>
-<h4 id="summary"><strong>Summary</strong> </h4>
+<h4 id="summary">Summary </h4>
 <p>Both Jupyter Notebooks and Python scripts help you write code —<br>
 but <strong>Jupyter is like a science lab</strong>, where you experiment and explain your thinking,<br>
 and a <strong>Python script is like a finished machine</strong>, ready to do its job efficiently.</p>
-<hr>
-<p>Absolutely! Here’s a clear, engaging, and age-appropriate description for <strong>grades 7–12</strong> explaining what a <strong>Python environment</strong> is. It fits perfectly with your existing Anaconda and Conda sections.</p>
-<hr>
-<h3 id="what-is-a-python-environment"><strong>What Is a Python Environment?</strong> </h3>
+<h3 id="what-is-a-python-environment">What Is a Python Environment? </h3>
 <p>A <strong>Python environment</strong> is like a <strong>workspace</strong> where all the tools and settings for your Python projects are kept.<br>
 It contains:</p>
 <ul>
@@ -212,8 +291,7 @@ It contains:</p>
 <li>The <strong>settings</strong> that tell Python how to run your code</li>
 </ul>
 <p>You can think of a Python environment as a <strong>sandbox</strong> — a safe space where you can build and experiment without messing up other projects.</p>
-<hr>
-<h4 id="why-environments-matter"><strong>Why Environments Matter</strong> </h4>
+<h4 id="why-environments-matter">Why Environments Matter </h4>
 <p>Sometimes, different projects need <strong>different tools or versions</strong> of Python.<br>
 For example:</p>
 <ul>
@@ -222,8 +300,7 @@ For example:</p>
 </ul>
 <p>If both projects shared the same setup, they could <strong>interfere</strong> with each other — like two students using the same art supplies but needing different colors!</p>
 <p>A Python environment keeps each project’s setup <strong>separate</strong> and <strong>organized</strong> so that everything works the way it should.</p>
-<hr>
-<h4 id="types-of-environments"><strong>Types of Environments</strong> </h4>
+<h4 id="types-of-environments">Types of Environments </h4>
 <p>There are usually two main kinds:</p>
 <ol>
 <li>
@@ -246,41 +323,16 @@ For example:</p>
 <pre data-role="codeBlock" data-info="bash" class="language-bash bash"><code>conda create <span class="token parameter variable">--name</span> robotics <span class="token assign-left variable">python</span><span class="token operator">=</span><span class="token number">3.11</span>
 conda activate robotics
 </code></pre><p>This creates a new environment called <strong>robotics</strong> with Python 3.11 — perfect for experiments or coding robots!</p>
-<hr>
-<h4 id="managing-environments"><strong>Managing Environments</strong> </h4>
+<h4 id="managing-environments">Managing Environments </h4>
 <p>Here are some useful commands you can run in <strong>Anaconda Prompt</strong> (Windows) or <strong>Terminal</strong> (Mac/Linux):</p>
-<table>
-<thead>
-<tr>
-<th>Action</th>
-<th>Command</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Create a new environment</td>
-<td><code>conda create --name myenv python=3.11</code></td>
-</tr>
-<tr>
-<td>List all environments</td>
-<td><code>conda env list</code></td>
-</tr>
-<tr>
-<td>Switch to an environment</td>
-<td><code>conda activate myenv</code></td>
-</tr>
-<tr>
-<td>Leave the current environment</td>
-<td><code>conda deactivate</code></td>
-</tr>
-<tr>
-<td>Remove an environment</td>
-<td><code>conda env remove --name myenv</code></td>
-</tr>
-</tbody>
-</table>
-<hr>
-<h4 id="think-of-it-like-this"><strong>Think of It Like This</strong> </h4>
+<p>| Action                        | Command                                 |<br>
+| -- |  |<br>
+| Create a new environment      | <code>conda create --name myenv python=3.11</code> |<br>
+| List all environments         | <code>conda env list</code>                        |<br>
+| Switch to an environment      | <code>conda activate myenv</code>                  |<br>
+| Leave the current environment | <code>conda deactivate</code>                      |<br>
+| Remove an environment         | <code>conda env remove --name myenv</code>         |</p>
+<h4 id="think-of-it-like-this">Think of It Like This </h4>
 <p>A <strong>Python environment</strong> is like a <strong>locker</strong> for your project:</p>
 <ul>
 <li>You can fill it with just the tools you need.</li>
@@ -288,13 +340,11 @@ conda activate robotics
 <li>You can open and close it anytime with <code>conda activate</code> and <code>conda deactivate</code>.</li>
 </ul>
 <p>This keeps your coding projects organized, reliable, and easy to manage — especially as you start exploring more advanced programming topics.</p>
-<hr>
-<h3 id="using-conda-to-manage-and-install-packages"><strong>Using Conda to Manage and Install Packages</strong> </h3>
+<h3 id="using-conda-to-manage-and-install-packages">Using Conda to Manage and Install Packages </h3>
 <p>When you install <strong>Anaconda</strong>, you also get a powerful tool called <strong>Conda</strong>.<br>
 Conda helps you <strong>install</strong>, <strong>update</strong>, and <strong>organize</strong> the different <strong>packages</strong> (extra tools and libraries) that make Python so useful.</p>
 <p>You can think of Conda like an <strong>app store for Python</strong>, but instead of games or social media apps, you’re installing tools for coding, math, science, or data analysis!</p>
-<hr>
-<h3 id="opening-conda"><strong>Opening Conda</strong> </h3>
+<h3 id="opening-conda">Opening Conda </h3>
 <p>To use Conda, you’ll type commands into a special window called a <strong>terminal</strong> or <strong>prompt</strong>.</p>
 <ul>
 <li><strong>Windows:</strong> Open the <strong>Anaconda Prompt</strong> (found in the Start Menu under “Anaconda3”).</li>
@@ -304,13 +354,11 @@ Conda helps you <strong>install</strong>, <strong>update</strong>, and <strong>o
 <p>You’ll know it’s ready when you see a line that looks like this:</p>
 <pre data-role="codeBlock" data-info="" class="language-text"><code>(base) C:\Users\YourName&gt;
 </code></pre><p>The word <strong>(base)</strong> means you’re in the main Conda environment.</p>
-<hr>
-<h3 id="checking-whats-installed"><strong>Checking What’s Installed</strong> </h3>
+<h3 id="checking-whats-installed">Checking What’s Installed </h3>
 <p>To see what packages are already available, type:</p>
 <pre data-role="codeBlock" data-info="bash" class="language-bash bash"><code>conda list
 </code></pre><p>You’ll see a list of all the tools that came with Anaconda, such as <strong>numpy</strong>, <strong>pandas</strong>, and <strong>matplotlib</strong>.</p>
-<hr>
-<h3 id="installing-a-new-package"><strong>Installing a New Package</strong> </h3>
+<h3 id="installing-a-new-package">Installing a New Package </h3>
 <p>If you want to add a new library that’s not already installed, use this command:</p>
 <pre data-role="codeBlock" data-info="bash" class="language-bash bash"><code>conda <span class="token function">install</span> package_name
 </code></pre><p>For example, to install a library called <strong>seaborn</strong> (used for making beautiful charts):</p>
@@ -318,14 +366,12 @@ Conda helps you <strong>install</strong>, <strong>update</strong>, and <strong>o
 </code></pre><p>Conda will find it, download it, and set it up automatically.<br>
 You can also install more than one package at a time:</p>
 <pre data-role="codeBlock" data-info="bash" class="language-bash bash"><code>conda <span class="token function">install</span> numpy scipy matplotlib
-</code></pre><hr>
-<h3 id="updating-packages"><strong>Updating Packages</strong> </h3>
+</code></pre><h3 id="updating-packages">Updating Packages </h3>
 <p>To keep your tools up to date, you can tell Conda to update everything:</p>
 <pre data-role="codeBlock" data-info="bash" class="language-bash bash"><code>conda update <span class="token parameter variable">--all</span>
 </code></pre><p>Or just one package:</p>
 <pre data-role="codeBlock" data-info="bash" class="language-bash bash"><code>conda update pandas
-</code></pre><hr>
-<h3 id="creating-a-separate-environment"><strong>Creating a Separate Environment</strong> </h3>
+</code></pre><h3 id="creating-a-separate-environment">Creating a Separate Environment </h3>
 <p>Sometimes you might want to try a new library or project without changing your main setup.<br>
 Conda lets you create a <strong>separate environment</strong> — like a sandbox where you can experiment safely.</p>
 <p>Here’s how to create one called “test_env” with Python 3.11:</p>
@@ -345,123 +391,21 @@ Conda lets you create a <strong>separate environment</strong> — like a sandbox
 <pre data-role="codeBlock" data-info="bash" class="language-bash bash"><code>conda deactivate
 </code></pre><p>You can see all your environments by typing:</p>
 <pre data-role="codeBlock" data-info="bash" class="language-bash bash"><code>conda <span class="token function">env</span> list
-</code></pre><hr>
-<h3 id="removing-a-package-or-environment"><strong>Removing a Package or Environment</strong> </h3>
+</code></pre><h3 id="removing-a-package-or-environment"><strong>Removing a Package or Environment</strong> </h3>
 <p>If you no longer need a package:</p>
 <pre data-role="codeBlock" data-info="bash" class="language-bash bash"><code>conda remove package_name
 </code></pre><p>If you want to delete an entire environment:</p>
 <pre data-role="codeBlock" data-info="bash" class="language-bash bash"><code>conda <span class="token function">env</span> remove <span class="token parameter variable">--name</span> test_env
-</code></pre><hr>
-<h3 id="tips-for-using-conda"><strong>Tips for Using Conda</strong> </h3>
+</code></pre><h3 id="tips-for-using-conda">Tips for Using Conda </h3>
 <ul>
 <li>Always open the <strong>Anaconda Prompt</strong> or <strong>Terminal</strong> before using Conda.</li>
 <li>Use <strong>Tab</strong> to auto-complete package names — it saves time!</li>
 <li>Avoid using both <strong>pip</strong> and <strong>conda</strong> for the same environment unless you understand how they work together.</li>
 </ul>
-<hr>
-<h2 id="laboratory-instructions">Laboratory Instructions </h2>
-<hr>
-<h3 id="how-to-download-and-install-anaconda"><strong>How to Download and Install Anaconda</strong> </h3>
-<p><strong>Anaconda</strong> is free and works on <strong>Windows</strong>, <strong>Mac</strong>, and <strong>Linux</strong> computers. Follow these steps to get started!</p>
-<hr>
-<h4 id="step-1-go-to-the-anaconda-website"><strong>Step 1: Go to the Anaconda Website</strong> </h4>
-<ol>
-<li>Open your web browser (like Chrome, Edge, or Safari).</li>
-<li>Go to the official website: <a href="https://www.anaconda.com/download">https://www.anaconda.com/download</a></li>
-<li>Click the <strong>Download</strong> button under <strong>“Anaconda Distribution.”</strong></li>
-</ol>
-<hr>
-<h4 id="step-2-choose-your-operating-system"><strong>Step 2: Choose Your Operating System</strong> </h4>
-<p>You’ll see options for:</p>
-<ul>
-<li><strong>Windows</strong></li>
-<li><strong>Mac</strong></li>
-<li><strong>Linux</strong></li>
-</ul>
-<p>Click on the one that matches your computer.</p>
-<hr>
-<h4 id="step-3-download-the-installer"><strong>Step 3: Download the Installer</strong> </h4>
-<p>Download the version for <strong>Python 3.x</strong> (the most recent version).<br>
-You can choose between:</p>
-<ul>
-<li><strong>64-Bit Graphical Installer</strong> — easiest for most users</li>
-<li><strong>64-Bit Command Line Installer</strong> — for advanced users</li>
-</ul>
-<p>Most students should pick the <strong>Graphical Installer</strong>.</p>
-<hr>
-<h4 id="step-4-install-on-windows"><strong>Step 4: Install on Windows</strong> </h4>
-<ol>
-<li>Double-click the downloaded <strong>.exe</strong> file.</li>
-<li>When the setup window opens, click <strong>Next</strong> and accept the license agreement.</li>
-<li>Choose <strong>Just Me</strong> unless you share the computer with others who also need Anaconda.</li>
-<li>Leave the installation location as the default, then click <strong>Next</strong>.</li>
-<li>When asked about adding Anaconda to your PATH, <strong>leave it unchecked</strong> (the installer will handle it).</li>
-<li>Click <strong>Install</strong> and wait for it to finish.</li>
-<li>Click <strong>Finish</strong> to complete the setup.</li>
-</ol>
-<hr>
-<h4 id="step-5-install-on-mac"><strong>Step 5: Install on Mac</strong> </h4>
-<ol>
-<li>Open the <strong>.pkg</strong> file you downloaded.</li>
-<li>Follow the on-screen steps to install.</li>
-<li>The installer will automatically set up everything you need.</li>
-<li>When it’s done, close the installer.</li>
-</ol>
-<hr>
-<h4 id="step-6-install-on-linux"><strong>Step 6: Install on Linux</strong> </h4>
-<ol>
-<li>
-<p>Open a <strong>terminal</strong> window.</p>
-</li>
-<li>
-<p>Navigate to the folder where you downloaded the <strong>.sh</strong> file.</p>
-</li>
-<li>
-<p>Run this command (replace the filename with the one you downloaded):</p>
-<pre data-role="codeBlock" data-info="bash" class="language-bash bash"><code><span class="token function">bash</span> Anaconda3-2025.XX-Linux-x86_64.sh
-</code></pre></li>
-<li>
-<p>Press <strong>Enter</strong> to review the license, then type <strong>yes</strong> to accept.</p>
-</li>
-<li>
-<p>Press <strong>Enter</strong> again to confirm the install location.</p>
-</li>
-<li>
-<p>When finished, close and reopen your terminal.</p>
-</li>
-<li>
-<p>Type:</p>
-<pre data-role="codeBlock" data-info="bash" class="language-bash bash"><code>conda list
-</code></pre><p>If you see a list of packages, your installation worked!</p>
-</li>
-</ol>
-<hr>
-<h4 id="step-7-launch-anaconda"><strong>Step 7: Launch Anaconda</strong> </h4>
-<p>After installation, open <strong>Anaconda Navigator</strong> — a friendly app that helps you launch tools like:</p>
-<ul>
-<li><strong>Jupyter Notebook</strong> (to write and run code)</li>
-<li><strong>Spyder</strong> (a professional-style coding editor)</li>
-<li><strong>Anaconda Prompt</strong> (for advanced command-line use)</li>
-</ul>
-<p>You can find Anaconda Navigator:</p>
-<ul>
-<li>On <strong>Windows</strong>: In the Start Menu under “Anaconda3”</li>
-<li>On <strong>Mac</strong>: In your Applications folder</li>
-<li>On <strong>Linux</strong>: Type <code>anaconda-navigator</code> in the terminal</li>
-</ul>
-<hr>
-<h4 id="youre-ready-to-code"><strong>You’re Ready to Code!</strong> </h4>
-<p>Once Anaconda opens, you can start exploring Python. Try launching <strong>Jupyter Notebook</strong> and typing:</p>
-<pre data-role="codeBlock" data-info="python" class="language-python python"><code><span class="token keyword keyword-print">print</span><span class="token punctuation">(</span><span class="token string">"Hello, Python!"</span><span class="token punctuation">)</span>
-</code></pre><p>If it prints that message — congratulations, your setup is complete!</p>
-<hr>
-<p>Excellent! Here’s a clear and age-appropriate <strong>Troubleshooting Guide</strong> you can add after the installation section. It’s written to be friendly, reassuring, and easy for students in grades 7–12 to follow.</p>
-<hr>
-<h2 id="lab-troubleshooting-guide"><strong>Lab Troubleshooting Guide</strong> </h2>
+<h2 id="lab-troubleshooting-guide">Lab Troubleshooting Guide </h2>
 <p>If something doesn’t work the first time, don’t worry — it’s very common when setting up programming tools!<br>
 Here are some simple ways to fix the most common issues:</p>
-<hr>
-<h4 id="problem-1-the-installer-wont-open"><strong>Problem 1: The Installer Won’t Open</strong> </h4>
+<h4 id="problem-1-the-installer-wont-open">Problem 1: The Installer Won’t Open </h4>
 <p><strong>Possible cause:</strong> Your computer’s security settings might be blocking it.</p>
 <p><strong>Fix:</strong></p>
 <ul>
@@ -477,8 +421,7 @@ Here are some simple ways to fix the most common issues:</p>
 </code></pre><p>then try running it again.</p>
 </li>
 </ul>
-<hr>
-<h4 id="problem-2-the-installation-takes-too-long-or-freezes"><strong>Problem 2: The Installation Takes Too Long or Freezes</strong> </h4>
+<h4 id="problem-2-the-installation-takes-too-long-or-freezes">Problem 2: The Installation Takes Too Long or Freezes </h4>
 <p><strong>Possible cause:</strong> Anaconda is a large program (over 3 GB) and can take time to install, especially on older computers.</p>
 <p><strong>Fix:</strong></p>
 <ul>
@@ -486,8 +429,7 @@ Here are some simple ways to fix the most common issues:</p>
 <li>Close other apps while installing.</li>
 <li>If it seems truly stuck, restart your computer and try again.</li>
 </ul>
-<hr>
-<h4 id="problem-3-anaconda-navigator-wont-open-windows"><strong>Problem 3: “Anaconda Navigator” Won’t Open (Windows)</strong> </h4>
+<h4 id="problem-3-anaconda-navigator-wont-open-windows">Problem 3: “Anaconda Navigator” Won’t Open (Windows) </h4>
 <p><strong>Fix:</strong></p>
 <ol>
 <li>
@@ -505,8 +447,7 @@ Here are some simple ways to fix the most common issues:</p>
 If it opens, your installation works — you can use this method anytime.</p>
 </li>
 </ol>
-<hr>
-<h4 id="problem-4-python-or-conda-commands-dont-work"><strong>Problem 4: Python or Conda Commands Don’t Work</strong> </h4>
+<h4 id="problem-4-python-or-conda-commands-dont-work">Problem 4: Python or Conda Commands Don’t Work </h4>
 <p><strong>Possible cause:</strong> The computer can’t find where Anaconda is installed.</p>
 <p><strong>Fix:</strong></p>
 <ul>
@@ -520,8 +461,7 @@ If it opens, your installation works — you can use this method anytime.</p>
 </li>
 </ul>
 <p>If you still get an error, try restarting your computer — this often helps the system recognize new software.</p>
-<hr>
-<h4 id="problem-5-you-installed-the-wrong-version"><strong>Problem 5: You Installed the Wrong Version</strong> </h4>
+<h4 id="problem-5-you-installed-the-wrong-version">Problem 5: You Installed the Wrong Version </h4>
 <p><strong>Fix:</strong></p>
 <ol>
 <li>
@@ -538,23 +478,20 @@ If it opens, your installation works — you can use this method anytime.</p>
 <p>Reinstall following the earlier steps.</p>
 </li>
 </ol>
-<hr>
-<h4 id="problem-6-you-see-permission-denied-or-access-denied-errors"><strong>Problem 6: You See “Permission Denied” or “Access Denied” Errors</strong> </h4>
+<h4 id="problem-6-you-see-permission-denied-or-access-denied-errors">Problem 6: You See “Permission Denied” or “Access Denied” Errors </h4>
 <p><strong>Fix:</strong></p>
 <ul>
 <li>Try installing <strong>“Just for Me”</strong> instead of <strong>“All Users”</strong> on Windows.</li>
 <li>On Mac or Linux, use a user folder you have full permission to write to.</li>
 <li>Avoid installing in system folders like <code>/usr/bin</code> or <code>C:\Program Files</code>.</li>
 </ul>
-<hr>
-<h4 id="when-all-else-fails"><strong>When All Else Fails</strong> </h4>
+<h4 id="when-all-else-fails">When All Else Fails </h4>
 <p>If nothing seems to work:</p>
 <ol>
 <li>Visit <a href="https://docs.anaconda.com/free/anaconda/">https://docs.anaconda.com/free/anaconda/</a> for official help.</li>
 <li>Ask a teacher or classmate for assistance — sometimes a fresh pair of eyes can spot the problem!</li>
 <li>As a last resort, uninstall and reinstall Anaconda from scratch.</li>
 </ol>
-<hr>
 
       </div>
       
