@@ -137,11 +137,14 @@ You can find Anaconda Navigator:
 
 #### You’re Ready to Code!
 
-Once Anaconda opens, you can start exploring Python. Try launching **Jupyter Notebook** and typing:
+Once Anaconda opens, you can start exploring Python. Try launching **Jupyter Notebook**  by clicking on the icon.
+
+The Jupyter Notebook application will launch and ask you to pick a kernal.  The kernal refers to a environement of python to use (see the theory section).  Choosing the default option "base environement" is fine for this exercise.  Later we will create and use specific environment for our applications.  You will then be prompted to create a new file and save it somewhere on your computer.  Save this file as "hello_world.ipynb" inside a directory you will be using for the class.  Once the file is saved, type
 
 ```python
 print("Hello, Python!")
 ```
+into once of the cells.  Select the cell and hit the triangle play button.  This launches the python instance to run your cell.
 
 If it prints that message — congratulations, your setup is complete!
 
