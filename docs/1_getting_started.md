@@ -4,7 +4,7 @@
 
 **Contact** jake.kunzler@gmail.com
 
-**Last Updated** Oct 26 2025
+**Last Updated** Nov 2 2025
 
 **License** This curriculum is distributed under the creative commons license 4.0.
 
