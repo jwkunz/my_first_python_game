@@ -25,8 +25,9 @@
   * The OSI Networking Model
   * Clients and Servers
   * Local Area Networks
+  * DNS
   * IPV4 Addresses
-  * The ZMQ library
+  * The netcat tool
 
 --- 
 
@@ -315,6 +316,692 @@ Each layer has its own **responsibility**, and together they make sure that data
 * Each layer performs a **specific role** in communication.
 * Data flows **down through layers** on the sender and **up through layers** on the receiver.
 * It helps us **understand, design, and troubleshoot** networks.
+
+---
+
+Absolutely! Here’s a **markdown lesson** on **Clients and Servers**, written for **grades 7–12**, with `.dot` diagrams to clearly show how they interact in a network.
+
+---
+
+### What Are the Roles of Clients and Servers?
+
+In computer networking, **clients** and **servers** are two main types of devices that **work together to share information and services**.
+
+They form the **client–server model**, which is the foundation of how most of the Internet works today.
+
+---
+
+#### The Big Idea
+
+* A **client** is a device (like your phone or laptop) that **requests** something.
+* A **server** is a powerful computer that **responds** to those requests by **providing** information or services.
+
+Think of it like a restaurant:
+
+* You (the **client**) order food.
+* The **server** (waiter/kitchen) prepares it and brings it back to you.
+
+---
+
+#### Roles of Each
+
+| Role       | Description                                            | Examples                                |
+| ---------- | ------------------------------------------------------ | --------------------------------------- |
+| **Client** | Sends requests and displays results to the user        | Web browsers, apps, phones              |
+| **Server** | Receives requests, processes them, and sends back data | Web servers, mail servers, file servers |
+
+---
+
+#### Diagram: Basic Client–Server Relationship
+
+```dot
+digraph client_server {
+  rankdir=LR;
+  node [shape=box, style=filled, fillcolor=lightyellow];
+
+  Client [label="Client\n(Phone, Laptop, Browser)"];
+  Server [label="Server\n(Web, File, Email)"];
+
+  Client -> Server [label="Request (e.g. webpage)"];
+  Server -> Client [label="Response (HTML, data, image)"];
+}
+```
+
+This shows how **requests** and **responses** flow between a client and a server.
+
+---
+
+#### Real-Life Examples
+
+| Scenario               | Client             | Server                              |
+| ---------------------- | ------------------ | ----------------------------------- |
+| Visiting a website     | Your web browser   | A web server (like Apache or Nginx) |
+| Sending an email       | Your mail app      | An email server                     |
+| Watching a video       | Your YouTube app   | A streaming server                  |
+| Playing an online game | Your console or PC | The game company’s server           |
+
+---
+
+#### How It Works Step-by-Step
+
+When you visit a website:
+
+1. You open a browser and type a web address.
+2. Your computer (the **client**) sends a **request** to the web server.
+3. The **server** finds the page and sends back the **response** (HTML, images, etc.).
+4. Your browser displays the website on your screen.
+
+---
+
+#### Diagram: Client Request Flow
+
+```dot
+digraph client_request {
+  rankdir=LR;
+  node [shape=box, style=filled, fillcolor=lightblue];
+
+  Browser [label="Browser (Client)"];
+  Internet [label="Internet"];
+  WebServer [label="Web Server"];
+  Database [label="Database"];
+
+  Browser -> Internet [label="HTTP Request"];
+  Internet -> WebServer [label="Routes Request"];
+  WebServer -> Database [label="Query for Data"];
+  Database -> WebServer [label="Return Data"];
+  WebServer -> Internet [label="Send Response"];
+  Internet -> Browser [label="Return Webpage"];
+}
+```
+
+This diagram shows how data travels **through multiple layers** — from client to server, and sometimes to a database, before returning back to the user.
+
+---
+
+#### Types of Servers
+
+| Server Type         | Purpose                    | Example             |
+| ------------------- | -------------------------- | ------------------- |
+| **Web Server**      | Stores and sends web pages | Apache, Nginx       |
+| **File Server**     | Stores and shares files    | Windows File Server |
+| **Mail Server**     | Handles email              | Gmail, Outlook      |
+| **Game Server**     | Hosts online games         | Minecraft Server    |
+| **Database Server** | Manages structured data    | MySQL, PostgreSQL   |
+
+---
+
+#### Diagram: Multiple Clients and One Server
+
+```dot
+digraph multi_client {
+  rankdir=TB;
+  node [shape=ellipse, style=filled, fillcolor=lightgreen];
+
+  C1 [label="Client 1"];
+  C2 [label="Client 2"];
+  C3 [label="Client 3"];
+  S [label="Server", shape=box, fillcolor=lightblue];
+
+  C1 -> S [label="Request"];
+  C2 -> S [label="Request"];
+  C3 -> S [label="Request"];
+  S -> C1 [label="Response"];
+  S -> C2 [label="Response"];
+  S -> C3 [label="Response"];
+}
+```
+
+This shows how **one server** can handle **many clients** at once — like a library serving multiple readers.
+
+---
+
+#### Alternative Model: Peer-to-Peer (P2P)
+
+Not all systems use the client-server model.
+In **peer-to-peer (P2P)** networks, **each computer can act as both a client and a server**.
+
+Examples:
+
+* File sharing (like BitTorrent)
+* Multiplayer games on local networks
+
+#### Diagram: Client–Server vs. Peer-to-Peer
+
+```dot
+digraph models {
+  rankdir=LR;
+  node [shape=ellipse, style=filled];
+
+  subgraph cluster_clientserver {
+    label="Client-Server Model";
+    style=filled;
+    color=lightgray;
+    C1 [label="Client", fillcolor=lightyellow];
+    C2 [label="Client", fillcolor=lightyellow];
+    S [label="Server", shape=box, fillcolor=lightblue];
+    C1 -> S;
+    C2 -> S;
+    S -> C1;
+    S -> C2;
+  }
+
+  subgraph cluster_p2p {
+    label="Peer-to-Peer Model";
+    style=filled;
+    color=lightgray;
+    P1 [label="Peer 1", fillcolor=lightgreen];
+    P2 [label="Peer 2", fillcolor=lightgreen];
+    P3 [label="Peer 3", fillcolor=lightgreen];
+    P1 -> P2;
+    P2 -> P3;
+    P3 -> P1;
+  }
+}
+```
+---
+
+#### Clients and Servers **Key Takeaways:**
+
+**Clients and servers** are like the **requesters and providers** of the digital world.
+They form the backbone of how the Internet works — from loading a website to sending an email.
+
+* A **client** asks for data or services.
+* A **server** provides the requested data or services.
+* The **client–server model** powers most of the Internet.
+* Some systems use **peer-to-peer (P2P)** instead, where all computers share equally.
+
+---
+
+###  What Is an IP Address?
+
+Every device connected to the Internet — your phone, laptop, game console, or even a smart fridge — needs a **unique identifier** so data can be sent to and from it.
+
+That identifier is called an **IP address**.
+
+---
+
+#### The Big Idea
+
+**IP** stands for **Internet Protocol** — the set of rules that defines how devices **locate** and **communicate** with each other on a network.
+
+An **IP address** is like your **home address**:
+
+* It tells other computers **where to send information** (like a letter or package).
+* Without it, your data wouldn’t know where to go.
+
+---
+
+#### What an IP Address Looks Like
+
+There are two main versions:
+
+| Version  | Name                        | Example                                   | Format                                  | Total Addresses                   |
+| -------- | --------------------------- | ----------------------------------------- | --------------------------------------- | --------------------------------- |
+| **IPv4** | Internet Protocol version 4 | `192.168.1.1`                             | Four numbers (0–255) separated by dots  | ~4.3 billion                      |
+| **IPv6** | Internet Protocol version 6 | `2001:0db8:85a3:0000:0000:8a2e:0370:7334` | Eight groups of four hexadecimal digits | ~340 undecillion (a huge number!) |
+
+---
+
+#### Analogy
+
+| Concept                      | Real Life                           | Networking       |
+| ---------------------------- | ----------------------------------- | ---------------- |
+| Home address                 | 123 Maple St.                       | 192.168.1.5      |
+| Postal service               | Mail delivery                       | Internet routers |
+| Envelope with return address | Data packet with source/destination | IP packet        |
+
+Just like a **postal address** gets mail to your house, an **IP address** gets data to your device.
+
+---
+
+#### Diagram: Sending a Packet Across the Internet
+
+```dot
+digraph ip_flow {
+  rankdir=LR;
+  node [shape=box, style=filled, fillcolor=lightyellow];
+
+  A [label="Device A\n192.168.1.2"];
+  R1 [label="Router 1"];
+  R2 [label="Router 2"];
+  S [label="Server\n93.184.216.34"];
+
+  A -> R1 [label="Packet: To 93.184.216.34"];
+  R1 -> R2 [label="Forward packet"];
+  R2 -> S [label="Deliver to Server"];
+}
+```
+
+This shows how data moves **from one IP address to another** through routers until it reaches the right destination.
+
+---
+
+#### IPv4: The Classic Address
+
+IPv4 addresses are **32 bits long**, divided into four sections called **octets**.
+Example:
+
+```
+192.168.1.5
+```
+
+Each part can go from **0 to 255**, because 8 bits can represent 256 possible values.
+
+---
+
+#### Diagram: IPv4 Breakdown
+
+```dot
+digraph ipv4_bits {
+  rankdir=LR;
+  node [shape=box, style=filled, fillcolor=lightblue];
+
+  A [label="192"];
+  B [label="168"];
+  C [label="1"];
+  D [label="5"];
+
+  A -> B -> C -> D;
+
+  subgraph cluster_bits {
+    label="Each = 8 bits (1 byte)";
+    style=dotted;
+  }
+}
+```
+
+So `192.168.1.5` = 4 numbers × 8 bits = 32 bits total.
+
+---
+
+#### IPv6: The Future of Addressing
+
+The Internet is running out of IPv4 addresses — there are **more devices than addresses available!**
+
+That’s why IPv6 was created.
+It uses **128 bits** instead of 32, allowing for a **massive number of unique addresses** — enough for every grain of sand on Earth (and then some!).
+
+IPv6 looks like this:
+
+```
+2001:0db8:85a3:0000:0000:8a2e:0370:7334
+```
+
+You can shorten it:
+
+```
+2001:db8:85a3::8a2e:370:7334
+```
+
+---
+
+#### Diagram: IPv4 vs IPv6
+
+```dot
+digraph ip_compare {
+  rankdir=LR;
+  node [shape=box, style=filled];
+
+  IPv4 [label="IPv4\n32 bits\n192.168.1.5", fillcolor=lightyellow];
+  IPv6 [label="IPv6\n128 bits\n2001:db8::7334", fillcolor=lightgreen];
+}
+```
+
+---
+
+####  Types of IP Addresses
+
+| Type           | Description                                              | Example                                   |
+| -------------- | -------------------------------------------------------- | ----------------------------------------- |
+| **Public IP**  | Used on the Internet — globally unique                   | `8.8.8.8` (Google DNS)                    |
+| **Private IP** | Used inside local networks — not visible to the Internet | `192.168.x.x`, `10.x.x.x`                 |
+| **Static IP**  | Does not change                                          | Used by servers                           |
+| **Dynamic IP** | Changes over time                                        | Common for home devices (assigned by ISP) |
+
+---
+
+#### Diagram: Private vs Public IPs in a Home Network
+
+```dot
+digraph home_network {
+  rankdir=TB;
+  node [shape=box, style=filled, fillcolor=lightyellow];
+
+  Internet [label="Internet\n(Public IP: 71.82.45.103)", fillcolor=lightblue];
+  Router [label="Home Router\nPrivate Network: 192.168.1.0/24", fillcolor=lightgreen];
+  Laptop [label="Laptop\n192.168.1.2"];
+  Phone [label="Phone\n192.168.1.3"];
+  Printer [label="Printer\n192.168.1.10"];
+
+  Internet -> Router [label="Public Connection"];
+  Router -> Laptop;
+  Router -> Phone;
+  Router -> Printer;
+}
+```
+
+This shows how one **public IP address** connects many **private devices** through your router.
+
+---
+
+####  How Devices Get Their IP
+
+Most devices don’t set their IP manually.
+They use **DHCP (Dynamic Host Configuration Protocol)**, which automatically assigns them an IP address when they connect to a network.
+
+---
+
+#### Diagram: DHCP Address Assignment
+
+```dot
+digraph dhcp {
+  rankdir=LR;
+  node [shape=box, style=filled, fillcolor=lightyellow];
+
+  Device [label="New Device\n(No IP yet)"];
+  Router [label="DHCP Server (Router)"];
+
+  Device -> Router [label="Request IP"];
+  Router -> Device [label="Assign IP (192.168.1.5)"];
+}
+```
+
+---
+
+#### IP Addresses and Security
+
+Your IP address can reveal:
+
+* Your **approximate location** (city or region)
+* Your **Internet provider**
+* Which **network** you’re on
+
+That’s why some people use **VPNs (Virtual Private Networks)** to mask or change their visible IP for privacy.
+
+---
+
+#### IP Addresses **Key Takeaways:**
+
+An **IP address** is how devices identify and talk to each other on the Internet.
+It’s the foundation for all communication — from visiting websites to sending emails.
+
+* **IP** = Internet Protocol
+* **IPv4** = older, 32-bit addresses
+* **IPv6** = newer, 128-bit addresses
+* **Public IPs** connect to the Internet
+* **Private IPs** are used inside networks
+* **DHCP** automatically assigns IPs
+* **Routers** translate between public and private networks
+
+---
+
+### How DNS Helps Clients Find Servers
+
+Every time you visit a website — like `www.google.com` — your computer needs to know **where that website actually lives** on the Internet.
+
+Computers don’t use words to find each other; they use **IP addresses** (like phone numbers).
+The **Domain Name System (DNS)** is what translates **names** (like `google.com`) into **numbers** (like `142.250.72.14`).
+
+---
+
+#### The Main Idea
+
+**DNS** is like the **Internet’s phone book**.
+It helps your computer **find the address** of the server that hosts the website you want to visit.
+
+When you type a web address:
+
+1. Your computer (the **client**) asks the **DNS system** for the server’s IP address.
+2. Once it knows the IP address, it can contact the **server** directly.
+
+---
+
+##### Analogy
+
+Think of it like calling a friend:
+
+* You know your friend’s **name**, but not their **phone number**.
+* You **look it up** in your phone’s contacts (that’s DNS!).
+* Once you have the number, you can **make the call** (that’s connecting to the server).
+
+---
+
+####  Key Parts of the DNS System
+
+| Component                    | Role                                                     | Example                                     |
+| ---------------------------- | -------------------------------------------------------- | ------------------------------------------- |
+| **Client**                   | The computer asking for the address                      | Your browser or laptop                      |
+| **DNS Resolver**             | Finds the address on your behalf                         | Usually run by your Internet provider (ISP) |
+| **Root Server**              | Knows where to find Top-Level Domains (.com, .org, etc.) | A global system of servers                  |
+| **TLD Server**               | Knows where to find domain names in its group            | `.com`, `.org`, `.edu`, etc.                |
+| **Authoritative DNS Server** | Has the final, correct IP address for the website        | Controlled by the website owner             |
+
+---
+
+#### Diagram: How DNS Finds an Address
+
+```dot
+digraph dns_lookup {
+  rankdir=LR;
+  node [shape=box, style=filled, fillcolor=lightyellow];
+
+  Client [label="Client (Your Computer)"];
+  Resolver [label="DNS Resolver\n(Your ISP or Google DNS)"];
+  Root [label="Root DNS Server"];
+  TLD [label="TLD Server (.com)"];
+  Auth [label="Authoritative DNS Server\n(for example.com)"];
+  Web [label="Web Server\n(example.com)"];
+
+  Client -> Resolver [label="1. Ask for IP of example.com"];
+  Resolver -> Root [label="2. Ask Root where .com servers are"];
+  Root -> Resolver [label="3. Reply: Ask TLD (.com)"];
+  Resolver -> TLD [label="4. Ask TLD where example.com is"];
+  TLD -> Resolver [label="5. Reply: Ask Authoritative Server"];
+  Resolver -> Auth [label="6. Ask for IP of example.com"];
+  Auth -> Resolver [label="7. Reply: IP = 93.184.216.34"];
+  Resolver -> Client [label="8. Return IP address"];
+  Client -> Web [label="9. Connect to 93.184.216.34"];
+}
+```
+
+---
+
+####  Step-by-Step: DNS Lookup Process
+
+1. **You type:** `www.example.com` in your browser.
+2. **Browser cache check:** Your computer first checks if it already knows the IP address.
+3. **Ask the resolver:** If not, it asks a **DNS resolver** (often provided by your ISP).
+4. **Root and TLD lookup:** The resolver asks the **root** and **TLD** servers where to find the domain.
+5. **Authoritative answer:** The **authoritative server** replies with the actual IP address.
+6. **Caching:** The resolver saves the result to speed up future requests.
+7. **Connect:** Now your browser connects to the web server using that IP address.
+
+---
+
+#### Diagram: Hierarchy of DNS
+
+```dot
+digraph dns_hierarchy {
+  rankdir=TB;
+  node [shape=ellipse, style=filled, fillcolor=lightblue];
+
+  Root [label="Root DNS Servers"];
+  COM [label=".com TLD Servers"];
+  ORG [label=".org TLD Servers"];
+  EDU [label=".edu TLD Servers"];
+  Example [label="example.com Authoritative DNS"];
+  Web [label="www.example.com Web Server"];
+
+  Root -> COM;
+  Root -> ORG;
+  Root -> EDU;
+  COM -> Example;
+  Example -> Web;
+}
+```
+
+This shows how DNS is organized like a **tree**, starting from the **Root Servers** at the top.
+
+---
+
+####  DNS Caching
+
+DNS lookups take time, so computers use **caching** to remember past results.
+
+* Your browser, computer, and ISP can all **store DNS results** for a short period (like 5 minutes or an hour).
+* If you visit the same website again soon, your computer **skips the lookup** and connects faster.
+
+---
+
+#### Fun Fact
+
+There are only **13 main Root Server systems** in the entire world — but each one uses **hundreds of mirrored copies** spread globally for speed and reliability.
+
+---
+
+#### DNS Key Takeaways
+
+DNS is what makes the Internet **easy to use**.
+It allows people to use **names** instead of numbers, while computers use **IP addresses** to find each other.
+
+* **DNS = Internet’s phone book.**
+* Translates **domain names** → **IP addresses**.
+* Involves **clients, resolvers, root, TLD, and authoritative servers**.
+* Uses **caching** to speed things up.
+
+---
+
+## Laboratory exercise — send a message with `netcat` (nc)
+
+### Objective 
+Use **Computer B** to send the exact text
+**Did you get this?**
+to **Computer A** using only the command line and `netcat`.
+
+---
+
+### Setup (both computers)
+
+1. Make sure both machines are on the same LAN and can reach each other:
+
+   * On **Linux/macOS**: `ip addr` (look for the IPv4 on the LAN interface, e.g. `192.168.1.12`)
+   * On **Windows**: `ipconfig` (look for `IPv4 Address`)
+
+2. Choose a TCP port for the exercise. We'll use **12345** (non-privileged, easy to remember).
+
+---
+
+### For macOS / Ubuntu / most Linux distributions
+
+#### 1. Install `netcat` (if needed)
+
+```bash
+sudo apt update
+sudo apt install netcat -y
+```
+
+*(macOS ships with netcat installed.  Some Linux distributions provide `nc.openbsd` / `netcat-traditional`. The basic `nc` command will work.)*
+
+> Note: different `nc` builds accept slightly different options. If `nc -l 12345` fails, use `nc -l -p 12345`.
+
+#### 2. Start the listener on **Computer A** (receiver)
+
+Open a terminal on Computer A and run **one** of these (try the first; if it errors, try the second):
+
+```bash
+# Preferred (works with OpenBSD netcat / modern nc)
+nc -l 12345
+```
+
+or
+
+```bash
+# Alternative syntax used by some netcat builds
+nc -l -p 12345
+```
+
+Leave that terminal open — it's now listening for a TCP connection on port 12345.
+
+#### 3. Send the message from **Computer B** (sender)
+
+On Computer B open a terminal and run:
+
+```bash
+echo "Did you get this?" | nc <IP_of_Computer_A> 12345
+```
+
+Replace `<IP_of_Computer_A>` with the receiver's IP (for example `192.168.1.10`).
+
+#### 4. Verify (on Computer A)
+
+Look at the terminal where `nc -l` is running — you should see:
+
+```
+Did you get this?
+```
+
+That’s it — message delivered!
+
+#### 5. Two-way chat (optional)
+
+If you want a simple interactive chat, do this:
+
+* On **Computer A**: `nc -l 12345`
+* On **Computer B**: `nc <IP_of_Computer_A> 12345`
+
+Now both terminals are connected — type on either side and press Enter to send. Close with `Ctrl+C` (or `Ctrl+D` to signal EOF).
+
+---
+
+### For Windows (two easy approaches)
+
+#### Option 1 — Use **Windows Subsystem for Linux (WSL)** (recommended if available)
+
+1. If WSL is installed, open a WSL shell and follow the **Linux** steps above (install `netcat` via `sudo apt install netcat` and use the same commands).
+2. WSL uses the same network, so use the host machine’s IP address for the other computer.
+
+#### Option 2 — Use **Ncat** (from Nmap) — native Windows tool
+
+1. Download/install Nmap (includes `ncat`) from the official source or use a package manager (e.g., Chocolatey: `choco install ncat`).
+2. Open a **PowerShell** (Run as Administrator on first-run networking changes).
+
+**On Computer A (receiver):**
+
+```powershell
+ncat -l 12345
+```
+
+**On Computer B (sender):**
+
+```powershell
+echo "Did you get this?" | ncat 192.168.1.10 12345
+```
+
+*(Replace `192.168.1.10` with Computer A’s IP.)*
+
+#### Windows firewall note
+
+If the connection is blocked, add an inbound firewall rule in PowerShell (run as Administrator):
+
+```powershell
+New-NetFirewallRule -DisplayName "AllowNC12345" -Direction Inbound -LocalPort 12345 -Protocol TCP -Action Allow
+```
+
+To remove the rule later:
+
+```powershell
+Remove-NetFirewallRule -DisplayName "AllowNC12345"
+```
+
+---
+
+### Troubleshooting (quick checklist)
+
+* Are the IP addresses correct? (`ip addr` / `ipconfig`)
+* Is the listener running on Computer A (terminal still open)?
+* Are you using the right port on both sides (12345)?
+* Firewall blocking? Temporarily allow the port (Ubuntu: `sudo ufw allow 12345/tcp` or Windows PowerShell rule above).
+* If `nc` syntax errors, try the alternate `-l -p` form.
 
 ---
 
