@@ -13,7 +13,7 @@ def main():
     # Game loop
     while True:
         # Draw the new state
-        print("\n" + game.draw())
+        print("\n" + str(game))
         # Ask for a move
         print(f"\nPlayer {game.get_current_player()}'s turn.")
         move = input("Enter your move (col row): ").strip()
@@ -31,7 +31,7 @@ def main():
 
         # Check for win
         if game.inspect_win():
-            print("\n" + game.draw())
+            print("\n" + str(game))
             # Remember the winner is the person who just finishe their move
             winner = 'O' if game.get_current_player() == 'X' else 'X'
             print(f"\n🎉 Player {winner} wins!")
@@ -39,7 +39,7 @@ def main():
 
         # Check for draw
         if all(cell != ' ' for row in game.get_board() for cell in row):
-            print("\n" + game.draw())
+            print("\n" + str(game))
             print("\nIt's a draw!")
             break
 

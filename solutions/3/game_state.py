@@ -64,8 +64,9 @@ class GameState:
                 return True
         return False
 
-    def draw(self):
-        """Return a string representation of the board using Unicode grid lines."""
+    def __str__(self):
+        """This is attribute function that converts the class to string representation.
+        Return a string representation of the board using Unicode grid lines."""
         
         # Build up the string in pieces with smaller strings for each row
         rows = []
