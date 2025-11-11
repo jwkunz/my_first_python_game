@@ -3,7 +3,7 @@ from game_state import *
 # ------------------------
 # Simple main game loop
 # ------------------------
-def main():
+def play_local_game():
     # Create a new game
     game = GameState()
     # Greet the user
@@ -45,4 +45,4 @@ def main():
 
 # If this file is called by itself, run the game loop
 if __name__ == "__main__":
-    main()
+    play_local_game()
