@@ -63,6 +63,12 @@ class GameState:
             if line[0] != ' ' and all(cell == line[0] for cell in line):
                 return True
         return False
+    
+    def inspect_draw(self):
+        """Check for a draw by seeing if all cells are full"""
+        if all(cell != ' ' for row in self._board for cell in row):
+            return True
+        return False
 
     def __str__(self):
         """This is attribute function that converts the class to string representation.

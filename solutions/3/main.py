@@ -38,7 +38,7 @@ def main():
             break
 
         # Check for draw
-        if all(cell != ' ' for row in game.get_board() for cell in row):
+        if game.inspect_draw():
             print("\n" + str(game))
             print("\nIt's a draw!")
             break
