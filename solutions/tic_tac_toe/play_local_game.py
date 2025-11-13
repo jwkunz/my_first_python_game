@@ -1,3 +1,6 @@
+"""
+This is a simple tic tac toe game played in a local terminal
+"""
 from game_state import *
 
 # ------------------------
