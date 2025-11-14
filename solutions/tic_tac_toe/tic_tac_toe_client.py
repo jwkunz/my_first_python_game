@@ -27,14 +27,15 @@ def discover_server(context, port, timeout=10):
             string = str(data,'utf-8')
             fields = string.split(" ")
             server_ip = fields[1].strip()
-            server_port = fields[2].strip()
+            port_to_clients = fields[2].strip()
+            port_from_clients = fields[3].strip()
             print(f"Discovered server at {server_ip}")
             break
         except:
             time.sleep(0.5)
 
     sock.close()
-    return server_ip
+    return server_ip,port_to_clients,port_from_clients
 
 # Wraps the client send message with a topic tag
 def send_client_message(pub_socket, message_string):
@@ -44,11 +45,9 @@ def main():
     context = zmq.Context()
 
     port_to_broadcast = 41110
-    port_to_clients = 41111
-    port_from_clients = 41112
 
     # Find the server
-    server_ip = discover_server(context, port_to_broadcast)
+    server_ip,port_to_clients,port_from_clients = discover_server(context, port_to_broadcast)
     if not server_ip:
         print("No server found. Exiting.")
         return

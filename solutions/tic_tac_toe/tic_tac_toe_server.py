@@ -21,12 +21,12 @@ def get_local_ip():
         return "127.0.0.1"
 
 # Service for advertising the server IP address
-def broadcast_ip(broadcast_ip, broadcast_port, destination_ip, destination_port, stop_flag):
+def broadcast_ip(broadcast_ip, broadcast_port, server_ip, port_to_clients,port_from_clients, stop_flag):
     """Thread function that continuously broadcasts server IP."""
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
     while not stop_flag["stop"]:
-        sock.sendto(bytes(f"broadcast/server_ip {destination_ip} {destination_port}",'utf-8'),(broadcast_ip,broadcast_port))
+        sock.sendto(bytes(f"broadcast/server_ip {server_ip} {port_to_clients} {port_from_clients}",'utf-8'),(broadcast_ip,broadcast_port))
         time.sleep(1)
 
 # Wraps the server send message with a topic tag
@@ -53,7 +53,7 @@ def main():
 
     # Start broadcast thread
     stop_flag = {"stop": False}
-    t = Thread(target=broadcast_ip, args=("255.255.255.255", port_to_broadcast, server_ip, port_from_clients,stop_flag))
+    t = Thread(target=broadcast_ip, args=("255.255.255.255", port_to_broadcast, server_ip, port_to_clients, port_from_clients,stop_flag))
     t.daemon = True
     t.start()
 
