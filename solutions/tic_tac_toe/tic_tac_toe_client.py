@@ -4,27 +4,72 @@ This file contains logic for a remote client to connect to a tic tac toe server 
 
 import zmq
 import time
+import socket
+
+def discover_server(context, port, timeout=10):
+    """Listen for broadcast messages to discover the server IP."""
+    # Create a UDP socket
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
+    # Allow the socket to reuse addresses (helpful when restarting quickly)
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+
+    # Bind to all interfaces on a chosen port
+    sock.bind(("", port))   # "" means INADDR_ANY, so it listens on all interfaces
+
+    print("Searching for Tic-Tac-Toe server via LAN broadcast...")
+    start = time.time()
+    server_ip = None
+
+    while time.time() - start < timeout:
+        try:
+            data, addr = sock.recvfrom(1024)  # buffer size 1024 bytes
+            string = str(data,'utf-8')
+            fields = string.split(" ")
+            server_ip = fields[1].strip()
+            server_port = fields[2].strip()
+            print(f"Discovered server at {server_ip}")
+            break
+        except:
+            time.sleep(0.5)
+
+    sock.close()
+    return server_ip
+
+# Wraps the client send message with a topic tag
+def send_client_message(pub_socket, message_string):
+    pub_socket.send_string(f"client/ {message_string}")
 
 def main():
     context = zmq.Context()
 
+    port_to_broadcast = 41110
+    port_to_clients = 41111
+    port_from_clients = 41112
+
+    # Find the server
+    server_ip = discover_server(context, port_to_broadcast)
+    if not server_ip:
+        print("No server found. Exiting.")
+        return
+    
     # Get the user information
-    server_ip = input("Enter the server IP address: ").strip()
     username = input("Enter your username: ").strip()
 
-    # Connect to the server sub port
+    # Setup the sockets
     pub_socket = context.socket(zmq.PUB)
-    pub_socket.connect(f"tcp://{server_ip}:41111")
-
-    # Listen on the response port
     sub_socket = context.socket(zmq.SUB)
-    sub_socket.connect(f"tcp://{server_ip}:41112")
-    sub_socket.setsockopt_string(zmq.SUBSCRIBE, "")
+
+    pub_socket.connect(f"tcp://{server_ip}:{port_from_clients}")
+    sub_socket.connect(f"tcp://{server_ip}:{port_to_clients}")
+    sub_socket.setsockopt_string(zmq.SUBSCRIBE, "server/")
+
+    print(f"Connected to server {server_ip}")
 
     print("Connecting to server...")
     # Give the server time to register you
     time.sleep(0.5)
-    pub_socket.send_string(f"request join {username}")
+    send_client_message(pub_socket,f"request join {username}")
 
     # State variables
     my_turn = False
@@ -42,7 +87,7 @@ def main():
                 if not tokens:
                     continue
 
-                cmd = tokens[0]
+                cmd = tokens[1]
 
                 if cmd == "joined":
                     # Inform player joined game
@@ -56,7 +101,7 @@ def main():
 
                 elif cmd == "turn":
                     # Check if turn and inform user of instructions
-                    turn_name = tokens[1]
+                    turn_name = tokens[2]
                     my_turn = (turn_name == username)
                     if my_turn:
                         print("It's your turn!")
@@ -65,7 +110,7 @@ def main():
 
                 elif cmd == "won":
                     # Inform of winner
-                    print(f"Game over! Winner: {tokens[1]}")
+                    print(f"Game over! Winner: {tokens[2]}")
                     running = False
 
                 elif cmd == "draw":
@@ -88,7 +133,7 @@ def main():
                 move = input("Enter your move (col row) or 'resign': ").strip().lower()
                 if move == "resign":
                     # Quit message
-                    pub_socket.send_string(f"resign {username}")
+                    send_client_message(pub_socket,f"resign {username}")
                     # Exit flag
                     running = False
                     break
@@ -97,7 +142,7 @@ def main():
                     col, row = map(int, move.split())
                     if 0 <= col <= 2 and 0 <= row <= 2:
                         # Send
-                        pub_socket.send_string(f"{col} {row} {username}")
+                        send_client_message(pub_socket,f"{col} {row} {username}")
                         my_turn = False
                     else:
                         # Redirect user to try again
@@ -110,7 +155,7 @@ def main():
     except KeyboardInterrupt:
         # Quit game
         print("\nExiting game.")
-        pub_socket.send_string(f"resign {username}")
+        send_client_message(pub_socket,f"resign {username}")
         running = False        
     finally:
         pub_socket.close()
