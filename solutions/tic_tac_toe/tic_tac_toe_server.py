@@ -22,11 +22,15 @@ def get_local_ip():
 
 # Service for advertising the server IP address
 def broadcast_ip(broadcast_ip, broadcast_port, server_ip, port_to_clients,port_from_clients, stop_flag):
-    """Thread function that continuously broadcasts server IP."""
+    """Thread function that continuously broadcasts server IP using UDP """
+    # UDP
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    # Broadcast settings
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+    # Until stop flag received
     while not stop_flag["stop"]:
-        sock.sendto(bytes(f"broadcast/server_ip {server_ip} {port_to_clients} {port_from_clients}",'utf-8'),(broadcast_ip,broadcast_port))
+        # Send this string
+        sock.sendto(bytes(f"broadcast/ server_info {server_ip} {port_to_clients} {port_from_clients}",'utf-8'),(broadcast_ip,broadcast_port))
         time.sleep(1)
 
 # Wraps the server send message with a topic tag
@@ -90,18 +94,23 @@ def main():
                     send_server_message(pub_socket,f"turn {players[turn_index]}")
                 continue
 
-            # Ignore if game hasn't started
-            if not game or len(players) < 2:
-                continue
 
             # Handle resignations
             if cmd == "resign" and len(tokens) == 3:
                 username = tokens[2]
-                if username in players:
+                print(f"{username} resigned")
+                if (username in players) and (len(players)==2):
                     winner = players[1] if username == players[0] else players[0]
                     send_server_message(pub_socket,f"won {winner}")
-                    print(f"{username} resigned. {winner} wins!")
+                    print(f"{winner} wins!")
                     break
+                else:
+                    players = []
+                    continue
+
+            # Ignore if game hasn't started
+            if not game or len(players) < 2:
+                continue
 
             # Handle moves
             if len(tokens) == 4:

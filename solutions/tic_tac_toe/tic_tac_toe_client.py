@@ -26,11 +26,12 @@ def discover_server(context, port, timeout=10):
             data, addr = sock.recvfrom(1024)  # buffer size 1024 bytes
             string = str(data,'utf-8')
             fields = string.split(" ")
-            server_ip = fields[1].strip()
-            port_to_clients = fields[2].strip()
-            port_from_clients = fields[3].strip()
-            print(f"Discovered server at {server_ip}")
-            break
+            if fields[1].strip() == "server_info":
+                server_ip = fields[2].strip()
+                port_to_clients = fields[3].strip()
+                port_from_clients = fields[4].strip()
+                print(f"Discovered server at {server_ip}")
+                break
         except:
             time.sleep(0.5)
 
