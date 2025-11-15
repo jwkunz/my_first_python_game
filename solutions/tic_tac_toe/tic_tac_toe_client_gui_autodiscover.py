@@ -1,46 +1,20 @@
 """
-Tic-tac-toe client GUI using PyQt5 and ZeroMQ for networking.
+Tic-tac-toe client GUI converted from PyQt5 to PySide6.
 
-This module implements a simple graphical client for a tic-tac-toe server.
-It provides:
-- A clickable 3x3 board rendered with large labels.
-- A small information panel for entering a username and controlling the session.
-- A terminal-like text area for status messages from the client and server.
-- Discovery of a server via UDP broadcast, and communication via ZeroMQ PUB/SUB.
-
-Protocol notes (as used by this client):
-- The client listens for UDP broadcasts that include a "server_info" token and ports.
-- After connecting, the client sends messages prefixed with a "client/" topic.
-- The client subscribes to messages with topic "server/" and expects tokens such as:
-    - "server/ update <board_string>"  where <board_string> is the ASCII board block
-    - "server/ turn <username>"
-    - "server/ joined <username>"
-    - "server/ won <username>"
-    - "server/ draw"
-    - "server/ error"
-
-Board representation:
-- Internally the GUI expects a 9-character string for simplified drawing:
-    - Characters are 'X', 'O', or '_' (underscore for empty)
-    - The string is read left-to-right, top-to-bottom (row-major).
-- The server may send a multi-line drawn board; this client extracts the
-  "update " tail and prints it verbatim to the terminal.
-
-This file focuses on being clear and educational; functions include
-verbose inline documentation to help future maintainers understand the
-flow of UI events and network interactions.
+Original file: tic_tac_toe_client_gui_autodiscover.py
+Converted imports and small Qt API differences for PySide6.
 """
 
 import sys
 import zmq
 import time
 import socket
-from PyQt5.QtWidgets import (
+from PySide6.QtWidgets import (
     QApplication, QWidget, QLabel, QLineEdit, QPushButton,
     QVBoxLayout, QHBoxLayout, QGridLayout, QTextEdit, QSizePolicy
 )
-from PyQt5.QtCore import Qt, pyqtSignal, QTimer
-from PyQt5.QtGui import QFont, QPalette, QColor, QMouseEvent
+from PySide6.QtCore import Qt, Signal, QTimer
+from PySide6.QtGui import QFont, QPalette, QColor, QMouseEvent
 
 
 # -----------------------------
@@ -50,14 +24,10 @@ class ClickableLabel(QLabel):
     """
     A QLabel subclass that represents one square on the tic-tac-toe board.
 
-    Each ClickableLabel stores its board coordinates (row, col) and emits a
-    'clicked' Qt signal when the user left-clicks it. The label is styled and
-    sized for clear, touch-friendly interaction (large font, bold, centered).
-
     Signals:
         clicked(int col, int row): emitted on left mouse-press with coordinates.
     """
-    clicked = pyqtSignal(int, int)  # row, col
+    clicked = Signal(int, int)  # row, col
 
     def __init__(self, col, row):
         """
@@ -95,13 +65,6 @@ class TicTacToeGUI(QWidget):
     """
     The main application window and controller for the tic-tac-toe client.
 
-    Responsibilities:
-    - Build and layout UI components (information panel, terminal, board).
-    - Discover server via UDP broadcast and connect with ZeroMQ sockets.
-    - Maintain a simple state machine for connecting, joining, and playing.
-    - Poll for server messages at a regular interval using QTimer.
-    - Queue and send user moves to the server.
-
     Attributes:
         game_state (str): textual state of the internal state machine.
         target_frame_rate_ms (int): QTimer interval in milliseconds.
@@ -111,7 +74,7 @@ class TicTacToeGUI(QWidget):
         username (str): local player's username once submitted.
     """
 
-    # Simple state defaults. The state machine transitions are handled in game_loop().
+    # Simple state defaults.
     game_state = "CONNECTING"
     target_frame_rate_ms = 100
     running = True
@@ -123,11 +86,6 @@ class TicTacToeGUI(QWidget):
     def __init__(self):
         """
         Initialize the main window and start the repeating game loop.
-
-        This method:
-        - Sets a window title and minimum size suitable for the layout.
-        - Builds the UI by composing the information, terminal, and board panels.
-        - Starts a QTimer that periodically calls game_loop() for processing.
         """
         super().__init__()
         self.setWindowTitle("Tic Tac Toe Client GUI")
@@ -145,11 +103,6 @@ class TicTacToeGUI(QWidget):
     def build_layout(self):
         """
         Compose the top-level layout for the window.
-
-        The UI is organized vertically:
-        - information panel (username, submit, resign)
-        - terminal panel (status label + message console)
-        - touch panel (3x3 grid of ClickableLabel cells)
         """
         main_layout = QVBoxLayout()
         main_layout.addLayout(self.build_information_panel())
@@ -163,10 +116,7 @@ class TicTacToeGUI(QWidget):
     def build_information_panel(self):
         """
         Construct the top information panel where the user enters their name
-        and controls the high-level game actions (new game, resign).
-
-        Returns:
-            QHBoxLayout: the composed widget layout to be added to the main UI.
+        and controls the high-level game actions.
         """
         layout = QHBoxLayout()
 
@@ -197,9 +147,6 @@ class TicTacToeGUI(QWidget):
     def set_information_panel_enable(self, enabled: bool):
         """
         Enable or disable the widgets in the information panel.
-
-        Args:
-            enabled (bool): True to enable inputs, False to disable.
         """
         for w in self.information_panel_widgets:
             w.setEnabled(enabled)
@@ -210,12 +157,6 @@ class TicTacToeGUI(QWidget):
     def build_touch_panel(self):
         """
         Create a 3x3 grid of ClickableLabel widgets representing the game board.
-
-        Each label is connected to handle_cell_clicked which places the click in
-        a local queue for later processing by the state machine.
-
-        Returns:
-            QGridLayout: ready-to-add grid containing the 3x3 board.
         """
         grid = QGridLayout()
         self.board_labels = []
@@ -235,14 +176,6 @@ class TicTacToeGUI(QWidget):
     def handle_cell_clicked(self, col, row):
         """
         Handler called when a ClickableLabel emits a clicked signal.
-
-        The click is enqueued to click_queue so it can be processed by the
-        game state machine during the next timer tick. Immediate UI feedback
-        is provided via the terminal panel.
-
-        Args:
-            col (int): clicked column index (0-2).
-            row (int): clicked row index (0-2).
         """
         self.click_queue.append((col, row))
         # Game logic will go here soon; for now, echo the coordinates.
@@ -251,18 +184,6 @@ class TicTacToeGUI(QWidget):
     def draw_game_string(self, game_state: str):
         """
         Simple board renderer that accepts a compact 9-character string.
-
-        The expected format is 9 characters: each is 'X', 'O', or '_' for empty.
-        Characters are applied in row-major order across the 3x3 board.
-
-        Args:
-            game_state (str): a 9-character string representing the board.
-
-        Notes:
-            - This function is intentionally permissive about the source of the
-              string; calling code should validate it before passing if needed.
-            - If the string is invalid length, an error is printed and the
-              function returns without changing the display.
         """
         if len(game_state) != 9:
             print("ERROR: Invalid game string")
@@ -278,12 +199,7 @@ class TicTacToeGUI(QWidget):
     # -----------------------------------
     def build_terminal_panel(self):
         """
-        Construct a vertical layout containing:
-        - a top row with a connection status label and a 'New Game' button
-        - a QTextEdit used as a read-only terminal to present messages.
-
-        Returns:
-            QVBoxLayout: the assembled terminal panel layout.
+        Construct a vertical layout containing status and a terminal console.
         """
         outer = QVBoxLayout()
         top_row = QHBoxLayout()
@@ -321,9 +237,6 @@ class TicTacToeGUI(QWidget):
     def terminal_print(self, text: str):
         """
         Append a line of text to the on-screen terminal.
-
-        Args:
-            text (str): text to append to the QTextEdit terminal.
         """
         self.terminal.append(text)
 
@@ -347,9 +260,6 @@ class TicTacToeGUI(QWidget):
     def closeEvent(self, event):
         """
         Handle the window close event.
-
-        Ensures sockets are closed cleanly and, if a game is running, sends a
-        resign message to the server before closing the PUB socket.
         """
         if self.pub_socket is not None:
             if self.running:
@@ -366,14 +276,6 @@ class TicTacToeGUI(QWidget):
     def handle_game_over_tokens(self, tokens):
         """
         Process tokens received from the server representing a game-over event.
-
-        Expected forms:
-            - ['server/', 'won', '<username>']
-            - ['server/', 'draw']
-            - ['server/', 'error']
-
-        The method prints relevant messages to the terminal and marks the
-        GUI as not running when the game is over.
         """
         if tokens[1] == "won":
             # Inform of winner
@@ -394,17 +296,12 @@ class TicTacToeGUI(QWidget):
     def resign(self):
         """
         Send a resign command to the server on behalf of the local player.
-
-        The server-side protocol expects the client to send "resign <username>"
-        and this client prefixes messages with "client/" when sending.
         """
         self.send_client_message(f"resign {self.username}")
 
     def set_game_over(self):
         """
         Mark the local state as game-over and provide console feedback.
-
-        This will stop the main polling loop and prompt the user to close the GUI.
         """
         self.terminal_print("The game is over.  Please close the GUI.")
         self.running = False
@@ -412,9 +309,6 @@ class TicTacToeGUI(QWidget):
     def send_client_message(self, message_string):
         """
         Send a client-originating message over the PUB socket with the required topic.
-
-        Args:
-            message_string (str): the payload to send after the 'client/' topic.
         """
         # The server expects the topic "client/" followed by the message body.
         self.pub_socket.send_string(f"client/ {message_string}")
@@ -422,14 +316,6 @@ class TicTacToeGUI(QWidget):
     def discover_server(self, port, timeout=10):
         """
         Listen for a UDP broadcast to discover the server's IP and ports.
-
-        Args:
-            port (int): UDP port to bind to for discovery messages.
-            timeout (int): seconds to wait before giving up.
-
-        Returns:
-            tuple: (server_ip, port_to_clients, port_from_clients) where the
-                   latter two are strings extracted from the broadcast payload.
         """
         # Create a UDP socket for discovery broadcasts.
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -466,8 +352,6 @@ class TicTacToeGUI(QWidget):
     def start_main_game_loop(self):
         """
         Start a QTimer that periodically calls game_loop() to process UI and network events.
-
-        Using a timer keeps the UI responsive while allowing simple polling-style networking.
         """
         self.timer = QTimer()
         self.timer.timeout.connect(self.game_loop)
@@ -477,16 +361,6 @@ class TicTacToeGUI(QWidget):
     def game_loop(self):
         """
         Primary state machine for the client.
-
-        The method implements a sequence of states:
-        - CONNECTING: discover server and set up ZeroMQ sockets
-        - WAIT_NEW_GAME: wait for user to press New Game
-        - WAIT_USER_NAME: wait for user to submit their username
-        - WAIT_TO_PLAY: handle incoming server messages until it's this player's turn
-        - GET_USER_MOVE: wait for a click and send it as a move
-
-        The loop also handles socket timeouts, message parsing, and transitions
-        driven by buttons, clicks, and server events.
         """
         if self.running == False:
             return
@@ -617,4 +491,4 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     gui = TicTacToeGUI()
     gui.show()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())
