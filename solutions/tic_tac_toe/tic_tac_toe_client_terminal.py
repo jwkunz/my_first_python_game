@@ -6,7 +6,7 @@ import zmq
 import time
 import socket
 
-def discover_server(context, port, timeout=10):
+def discover_server(port, timeout=10):
     """Listen for broadcast messages to discover the server IP."""
     # Create a UDP socket
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -43,28 +43,28 @@ def send_client_message(pub_socket, message_string):
     pub_socket.send_string(f"client/ {message_string}")
 
 def main():
-    context = zmq.Context()
+
 
     port_to_broadcast = 41110
 
     # Find the server
-    server_ip,port_to_clients,port_from_clients = discover_server(context, port_to_broadcast)
+    server_ip,port_to_clients,port_from_clients = discover_server(port_to_broadcast)
     if not server_ip:
         print("No server found. Exiting.")
         return
-    
+    print(f"Found server at {server_ip}")
+
     # Get the user information
     username = input("Enter your username: ").strip()
 
     # Setup the sockets
+    context = zmq.Context()
     pub_socket = context.socket(zmq.PUB)
     sub_socket = context.socket(zmq.SUB)
 
     pub_socket.connect(f"tcp://{server_ip}:{port_from_clients}")
     sub_socket.connect(f"tcp://{server_ip}:{port_to_clients}")
     sub_socket.setsockopt_string(zmq.SUBSCRIBE, "server/")
-
-    print(f"Connected to server {server_ip}")
 
     print("Connecting to server...")
     # Give the server time to register you
