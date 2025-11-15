@@ -1,4 +1,3 @@
-# ...existing code...
 """
 Tic-tac-toe server (terminal) with UDP discovery and ZMQ PUB/SUB transport.
 
@@ -45,6 +44,7 @@ import time
 from threading import Thread
 from game_state import GameState
 import random
+import sys
 
 
 def get_local_ip():
@@ -148,8 +148,17 @@ def main():
           players are randomly shuffled to decide who plays first.
         - Each valid move results in an "update" broadcast and a "turn"
           broadcast for the next player; wins/draws result in "won"/"draw".
+
+    If the server is started with the flag "--no_broadcast" it will not advertise its location
     """
     context = zmq.Context()
+
+    # Allow disabling UDP broadcast discovery via command-line flag.
+    # By default auto_discover is True; supply --no_broadcast to disable it.
+    auto_discover = True
+    if "--no_broadcast" in sys.argv[1:]:
+        auto_discover = False
+        print("Auto-discovery disabled via --no_broadcast")
 
     # Ports chosen for the example; these may be changed if required.
     port_to_broadcast = 41110      # UDP discovery port
@@ -170,16 +179,17 @@ def main():
     # We only care about messages that start with "client/".
     sub_socket.setsockopt_string(zmq.SUBSCRIBE, "client/")
 
-    print(f"Server broadcasting information for {server_ip}")
+    if auto_discover:
+        print(f"Server broadcasting information for {server_ip}")
 
-    # Start a background thread to periodically broadcast server discovery info.
-    stop_flag = {"stop": False}
-    broadcaster = Thread(
-        target=broadcast_ip,
-        args=("255.255.255.255", port_to_broadcast, server_ip, port_to_clients, port_from_clients, stop_flag)
-    )
-    broadcaster.daemon = True
-    broadcaster.start()
+        # Start a background thread to periodically broadcast server discovery info.
+        stop_flag = {"stop": False}
+        broadcaster = Thread(
+            target=broadcast_ip,
+            args=("255.255.255.255", port_to_broadcast, server_ip, port_to_clients, port_from_clients, stop_flag)
+        )
+        broadcaster.daemon = True
+        broadcaster.start()
 
     print("Waiting for two players to join...")
 
