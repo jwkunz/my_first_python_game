@@ -75,7 +75,7 @@ class TicTacToeGUI(QWidget):
     """
 
     # Simple state defaults.
-    game_state = "CONNECTING"
+    game_state = "INITIALIZE"
     target_frame_rate_ms = 100
     running = True
     click_queue = []
@@ -316,7 +316,7 @@ class TicTacToeGUI(QWidget):
         # The server expects the topic "client/" followed by the message body.
         self.pub_socket.send_string(f"client/ {message_string}")
 
-    def discover_server(self, port, timeout=10):
+    def discover_server(self, port, timeout=1):
         """
         Listen for a UDP broadcast to discover the server's IP and ports.
         """
@@ -324,30 +324,26 @@ class TicTacToeGUI(QWidget):
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         # Allow quick rebinds for repeated local testing.
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        sock.settimeout(timeout)
         # Bind on all interfaces so broadcasts on any active NIC are seen.
         sock.bind(("", port))
-
-        self.terminal_print(
-            "Searching for Tic-Tac-Toe server via LAN broadcast...")
         start = time.time()
         server_ip = None
 
-        # Block in short increments until timeout: this keeps the UI responsive.
-        while time.time() - start < timeout:
-            try:
-                data, addr = sock.recvfrom(1024)  # buffer size 1024 bytes
-                string = str(data, 'utf-8')
-                fields = string.split(" ")
-                # Expect a message shaped like: "<whatever> server_info <ip> <port_to_clients> <port_from_clients>"
-                if fields[1].strip() == "server_info":
-                    server_ip = fields[2].strip()
-                    port_to_clients = fields[3].strip()
-                    port_from_clients = fields[4].strip()
-                    self.terminal_print(f"Discovered server at {server_ip}")
-                    break
-            except:
-                # Sleep briefly to avoid busy-waiting; exceptions commonly occur due to timeouts.
-                time.sleep(0.5)
+        try:
+            data, addr = sock.recvfrom(1024)  # buffer size 1024 bytes
+            string = str(data, 'utf-8')
+            fields = string.split(" ")
+            # Expect a message shaped like: "<whatever> server_info <ip> <port_to_clients> <port_from_clients>"
+            if fields[1].strip() == "server_info":
+                server_ip = fields[2].strip()
+                port_to_clients = fields[3].strip()
+                port_from_clients = fields[4].strip()
+                self.terminal_print(f"Discovered server at {server_ip}")
+        except:
+            server_ip = None
+            port_to_clients = None
+            port_from_clients = None
 
         sock.close()
         return server_ip, port_to_clients, port_from_clients
@@ -367,42 +363,40 @@ class TicTacToeGUI(QWidget):
         """
         if self.running == False:
             return
-
+        if self.game_state == "INITIALIZE":
+            self.set_status_searching()
+            self.terminal_print(
+            "Searching for Tic-Tac-Toe server's LAN broadcast...")
+            self.game_state = "CONNECTING"
         if self.game_state == "CONNECTING":
             # Initial connecting state: find server, then establish ZMQ PUB/SUB sockets.
-            self.set_status_searching()
             self.set_information_panel_enable(False)
             self.port_to_broadcast = 41110
             server_ip, port_to_clients, port_from_clients = self.discover_server(
-                self.port_to_broadcast)
-            if not server_ip:
-                # Discovery failed: show error and stop attempting to proceed.
-                self.set_status_error()
-                self.terminal_print("No server found. Exiting.")
-                return
+                self.port_to_broadcast,timeout=1.0)
+            if server_ip is not None:
+                self.terminal_print(f"Found server at {server_ip}")
 
-            self.terminal_print(f"Found server at {server_ip}")
+                # Create a ZMQ context and sockets for publishing client messages and
+                # subscribing to server updates.
+                self.context = zmq.Context()
+                self.pub_socket = self.context.socket(zmq.PUB)
+                self.sub_socket = self.context.socket(zmq.SUB)
 
-            # Create a ZMQ context and sockets for publishing client messages and
-            # subscribing to server updates.
-            self.context = zmq.Context()
-            self.pub_socket = self.context.socket(zmq.PUB)
-            self.sub_socket = self.context.socket(zmq.SUB)
+                # Connect sockets using the addresses learned from discovery broadcast.
+                self.pub_socket.connect(f"tcp://{server_ip}:{port_from_clients}")
+                self.sub_socket.connect(f"tcp://{server_ip}:{port_to_clients}")
+                # Only accept messages sent with topic "server/".
+                self.sub_socket.setsockopt_string(zmq.SUBSCRIBE, "server/")
+                # Make recv non-blocking with a short timeout to keep the UI responsive.
+                self.sub_socket.setsockopt(zmq.RCVTIMEO, self.target_frame_rate_ms)
 
-            # Connect sockets using the addresses learned from discovery broadcast.
-            self.pub_socket.connect(f"tcp://{server_ip}:{port_from_clients}")
-            self.sub_socket.connect(f"tcp://{server_ip}:{port_to_clients}")
-            # Only accept messages sent with topic "server/".
-            self.sub_socket.setsockopt_string(zmq.SUBSCRIBE, "server/")
-            # Make recv non-blocking with a short timeout to keep the UI responsive.
-            self.sub_socket.setsockopt(zmq.RCVTIMEO, self.target_frame_rate_ms)
+                self.set_status_connected()
 
-            self.set_status_connected()
+                self.terminal_print("Press 'New Game' to begin")
+                self.set_information_panel_enable(True)
 
-            self.terminal_print("Press 'New Game' to begin")
-            self.set_information_panel_enable(True)
-
-            self.game_state = "WAIT_NEW_GAME"
+                self.game_state = "WAIT_NEW_GAME"
 
         elif self.game_state == "WAIT_NEW_GAME":
             # User has clicked New Game -> ask for username
