@@ -44,7 +44,7 @@ class ClickableLabel(QLabel):
         self.setAlignment(Qt.AlignCenter)
         self.setFont(QFont("Arial", 48, QFont.Bold))
         self.setStyleSheet("border: 2px solid black;")
-        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
 
     def mousePressEvent(self, event: QMouseEvent):
         """
@@ -92,10 +92,11 @@ class TicTacToeGUI(QWidget):
 
         # Start with a reasonable minimum size instead of maximized so it's usable
         # on a variety of display sizes and in automated testing.
-        self.setMinimumSize(600, 600)
+        self.setMinimumSize(400,300)
 
         self.build_layout()
         self.start_main_game_loop()
+        self.setStyleSheet("background-color: darkslategray; color:white")
 
     # -----------------------------------
     # Build all panels
@@ -169,6 +170,7 @@ class TicTacToeGUI(QWidget):
                 label.clicked.connect(self.handle_cell_clicked)
                 grid.addWidget(label, r, c)
                 row.append(label)
+                label.setStyleSheet("background-color: lightslategray;")
             self.board_labels.append(row)
 
         return grid
@@ -181,18 +183,19 @@ class TicTacToeGUI(QWidget):
         # Game logic will go here soon; for now, echo the coordinates.
         self.terminal_print(f"Cell clicked: Column {col}, Row {row}")
 
-    def draw_game_string(self, game_state: str):
+    def draw_game_string(self, game_board_string: str):
         """
-        Simple board renderer that accepts a compact 9-character string.
+        Simple board renderer that accepts the terminal friendly game board string
         """
-        if len(game_state) != 9:
-            print("ERROR: Invalid game string")
-            return
-
-        for i, ch in enumerate(game_state):
-            r, c = divmod(i, 3)
-            # Render underscore as an empty label for ergonomics.
-            self.board_labels[r][c].setText("" if ch == "_" else ch)
+        idx = 1
+        
+        for row in range(3):
+            for col in range(3):
+                mark = game_board_string[idx]
+                # Render underscore as an empty label for ergonomics.
+                self.board_labels[row][col].setText(mark)
+                idx += 4
+            idx += 12
 
     # -----------------------------------
     # Terminal Panel
@@ -434,8 +437,9 @@ class TicTacToeGUI(QWidget):
                     self.terminal_print(f"Player joined: {tokens[-1]}")
                 elif tokens[1] == "update":
                     # Display the remainder of the message after the 'update ' token.
-                    board = msg.split(sep="update ")[1]
-                    self.terminal_print("\nGame Board:\n" + board)
+                    board_game_string = msg.split(sep="update ")[1]
+                    self.draw_game_string(board_game_string)
+                    #self.terminal_print("\nGame Board:\n" + board)
                 elif tokens[1] == "turn":
                     # Server instructs whose turn it is. If it's this client, enter GET_USER_MOVE.
                     turn_name = tokens[2]
