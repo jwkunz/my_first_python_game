@@ -17,6 +17,9 @@ Some of the laboratory exercises requires writing code to solve problems.  The `
 The class curriculum makes efforts to be cross-platform for student running Linux, Windows, and macOS, but in the author's opinion students will have the best learning outcomes by using Ubuntu 2025.
 The python instruction is peformed in the beginner friendly Anaconda environment.
 
+You can recreate the environment via:
+`conda env create -f environment.yml`
+
 ## License
 
 The content of this class curriculum and repository is subject to Copyright Dr. Jakob W. Kunzler 2025 and is distributed under the Creative Commons License.
