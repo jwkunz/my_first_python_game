@@ -193,7 +193,7 @@ You’ll see the messages appear in real time.
 
 Students will create and run two Python programs that use **ZeroMQ (ZMQ)** to send and receive messages in real time using the **Publish/Subscribe model**.
 
-They’ll:
+By the end of this lesson, students will be able to:
 
 * Set up a Conda environment and install ZMQ.
 * Create a **Publisher** and a **Subscriber** Python script.

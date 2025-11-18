@@ -20,7 +20,7 @@
 
 ## Objectives
 
-* Learn about:
+By the end of this lesson, students will learn:
   * What Are Computer Networks
   * The OSI Networking Model
   * Clients and Servers

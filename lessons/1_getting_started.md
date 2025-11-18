@@ -19,7 +19,7 @@
 
 ## Objectives
 
-* Learn about:
+* By the end of this lesson, students will be able learn about:
   * Python 
   * Distributions
   * Environments
