@@ -15,7 +15,7 @@
 * Beginner students with high school and some college math and no prior programming expierence  
 * 30 minutes of reading
 
-## 1. Introduction
+## Introduction
 
 The scientific Python ecosystem is built around three core libraries:
 
@@ -29,7 +29,7 @@ In Jupyter, these tools work together to create fast, interactive plots for scie
 
 ---
 
-## 2. Setup
+## Setup
 
 Run this cell to import the essential tools:
 
