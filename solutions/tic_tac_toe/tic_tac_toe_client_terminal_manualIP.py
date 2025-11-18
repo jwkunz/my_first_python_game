@@ -1,203 +1,269 @@
 """
-Terminal-mode tic-tac-toe client that connects to a server by manually-entered IP.
+Terminal-mode tic-tac-toe client for the example server.
 
-This module implements a simple command-line client for playing a tic-tac-toe
-game against a server on the local network. Unlike the other client variant
-that discovers the server via UDP broadcasts, this script asks the user to
-provide the server IP address (and the user's desired username) interactively.
+This module implements a minimal command-line client that can discover a
+local tic-tac-toe server via UDP broadcast, connect using ZeroMQ PUB/SUB,
+and participate in a game by sending simple textual commands.
 
-Primary responsibilities:
-- Prompt the user for the server IP and username.
-- Establish ZeroMQ PUB/SUB sockets connected to the server's known ports.
-- Send a join request to the server and participate in turn-based play.
-- Display textual board updates and simple status messages received from the server.
-- Allow the user to submit moves (col row) or type "resign" to quit.
+Design goals:
+- Keep the client simple and easy to read for educational purposes.
+- Use UDP broadcast discovery so the client does not need a priori server IP.
+- Communicate with the server using topic-prefixed strings:
+    * Outgoing: "client/ <payload>"
+    * Incoming: messages prefixed with "server/" and a command token.
 
-Protocol summary (as expected by the server used in the accompanying examples):
-- Outgoing client messages (sent on the PUB socket) take the forms:
-    * "request join <username>"
-    * "<col> <row> <username>"         (a move)
-    * "resign <username>"
-- Incoming server messages on the SUB socket are simple whitespace-separated
-  command lines such as:
-    * "joined <username>"
-    * "update <ascii-board-drawing...>"
-    * "turn <username>"
-    * "won <username>"
-    * "draw"
-    * "error"
+Protocol notes (as expected by this client and the example server):
+- Discovery broadcast payload is expected to include the token "server_info"
+  followed by the server IP and two ports: <port_to_clients> <port_from_clients>.
+- After discovery:
+    - Client connects a PUB socket to port_from_clients (to send to server).
+    - Client connects a SUB socket to port_to_clients (to receive from server).
+    - Client subscribes to messages starting with topic "server/".
+- Typical server commands received via SUB:
+    - "server/ joined <username>"
+    - "server/ update <board-drawing>"
+    - "server/ turn <username>"
+    - "server/ won <username>"
+    - "server/ draw"
+    - "server/ error"
 
-Notes and assumptions:
-- This client connects to TCP ports 41111 (server PUB -> clients) and
-  41112 (server SUB <- clients) by default; these ports are hard-coded to
-  match the sample server used by this project.
-- The SUB socket is configured to subscribe to all messages (empty topic),
-  because some server examples send messages without a topic prefix.
-- The implementation uses non-blocking recv on the SUB socket together with
-  a small sleep in the main loop to remain responsive while waiting for I/O.
-- This module is intended for manual use from a terminal and performs
-  blocking reads for user input when it is the player's turn.
+Usage:
+    python tic_tac_toe_client_terminal.py
+
+This script is intentionally synchronous and blocking in places (input()),
+because it is designed for manual terminal use rather than as a background
+service. It uses short sleeps and non-blocking ZMQ recv to remain responsive.
 """
 import zmq
 import time
+import socket
+
+
+def send_client_message(pub_socket, message_string):
+    """
+    Send a client-originated message via the provided PUB socket with the expected topic.
+
+    The server in this example expects client messages to be sent with the
+    "client/" topic prefix followed by a space and the payload. This helper
+    centralizes that format so callers only provide the payload.
+
+    Parameters:
+        pub_socket (zmq.Socket): a configured ZMQ PUB socket connected to server.
+        message_string (str): payload to send (e.g. "request join alice", "resign alice").
+
+    Example:
+        send_client_message(pub_socket, "request join alice")
+    """
+    pub_socket.send_string(f"client/ {message_string}")
 
 
 def main():
     """
-    Start the terminal client and manage the interactive game session.
+    Terminal-mode main loop: discover server, join, and interact until game ends.
 
     Flow:
-    1. Prompt the user for the server IP and a username.
-    2. Create a ZMQ Context and connect:
-         - PUB socket -> tcp://<server_ip>:41111 (send commands to server)
-         - SUB socket -> tcp://<server_ip>:41112 (receive server updates)
-    3. Send "request join <username>" to register with the server.
-    4. Enter a loop that:
-         - non-blocking receives server messages and handles them (update, turn, won, draw, error)
-         - when it becomes this client's turn, prompt the user for a move or 'resign'
-         - validates user input and sends moves to server in the required format
-    5. Cleanly close sockets and terminate the ZMQ context on exit.
+    1. Discover server via UDP broadcast.
+    2. Prompt for username and connect PUB/SUB sockets.
+    3. Send a "request join <username>" message and enter the game loop.
+    4. React to incoming server messages and prompt the user for moves when it's their turn.
+    5. Support 'resign' to quit the game and notify the server.
 
-    Behaviour and edge-cases:
-    - The SUB socket is polled with zmq.NOBLOCK; when no message is available,
-      zmq.Again is raised and the loop continues.
-    - When this client is in 'my_turn' state it will block on input() until the
-      user responds; this design simplifies the terminal interaction model.
-    - If the user enters invalid input, they are prompted again without notifying
-      the server; only valid moves or 'resign' are sent.
-    - KeyboardInterrupt (Ctrl-C) triggers a graceful resign notification before exit.
+    The loop uses non-blocking SUB recv and short sleeps to remain responsive.
+    KeyboardInterrupt (Ctrl-C) is handled to gracefully resign and close sockets.
 
-    This function interacts directly with the terminal and does not return any
-    value; it exits when the game ends or the user quits.
+    Terminal-mode client implemented as a clean state machine.
+
+    States:
+        DISCOVER     – find server via UDP broadcast
+        CONNECT      – set up sockets and send join request
+        WAIT_JOIN    – wait for 'joined <username>' confirmation
+        WAIT_START   – wait for first 'update' & 'turn' messages
+        MY_TURN      – prompt user for move; send move/resign
+        WAIT_UPDATE  – waiting for other player's move
+        GAME_OVER    – print result and exit
     """
-    context = zmq.Context()
 
-    # Prompt the user for the server IP and their desired username.
-    # .strip() trims accidental surrounding whitespace.
-    server_ip = input("Enter the server IP address: ").strip()
-    username = input("Enter your username: ").strip()
+    # -------------------------------
+    # State enumeration
+    # -------------------------------
 
-    # Create and connect the PUB socket to the server's "incoming from clients" port.
-    # The server in the example binds a PUB socket at tcp://*:41111 for distributing updates;
-    # clients publish to the complementary port so the server can receive them.
-    pub_socket = context.socket(zmq.PUB)
-    pub_socket.connect(f"tcp://{server_ip}:41111")
+    DISCOVER, CONNECT, WAIT_JOIN, WAIT_START, MY_TURN, WAIT_UPDATE, GAME_OVER = range(7)
 
-    # Create and connect the SUB socket to receive server messages.
-    # The SUB socket subscribes to the empty string to receive all topics/messages.
-    sub_socket = context.socket(zmq.SUB)
-    sub_socket.connect(f"tcp://{server_ip}:41112")
-    sub_socket.setsockopt_string(zmq.SUBSCRIBE, "")
+    state = DISCOVER
+    running = True
+    username = None
 
-    print("Connecting to server...")
-    # Sleep briefly to allow the server to process the new connection in simple setups.
-    time.sleep(0.5)
+    context = None
+    pub_socket = None
+    sub_socket = None
 
-    # Send a join request announcing the username to the server.
-    # The server expects a "request join <username>" form to register the player.
-    pub_socket.send_string(f"request join {username}")
+    server_ip = None
+    port_to_clients = None
+    port_from_clients = None
 
-    # Local state used by the main loop.
-    my_turn = False   # True when the server indicates it is this client's turn
-    running = True    # Flag to keep the main loop running
+    my_turn = False
+
+    print("=== Tic Tac Toe Client ===")
 
     try:
         while running:
+
+            # ============================================================
+            # STATE: DISCOVER — find the server by asking the user
+            # ============================================================
+            if state == DISCOVER:
+                server_ip = input("Enter the server IP address: ").strip() 
+                port_to_clients = int(input("Enter the port number of server -> client: ").strip())
+                port_from_clients = int(input("Enter the port number of client -> server: ").strip())
+                state = CONNECT
+                continue
+
+            # ============================================================
+            # STATE: CONNECT — set up sockets and send join request
+            # ============================================================
+            if state == CONNECT:
+                username = input("Enter your username: ").strip()
+
+                context = zmq.Context()
+                pub_socket = context.socket(zmq.PUB)
+                sub_socket = context.socket(zmq.SUB)
+
+                pub_socket.connect(f"tcp://{server_ip}:{port_from_clients}")
+                sub_socket.connect(f"tcp://{server_ip}:{port_to_clients}")
+
+                sub_socket.setsockopt_string(zmq.SUBSCRIBE, "server/")
+
+                print("Connecting to server...")
+                time.sleep(0.5)
+                send_client_message(pub_socket, f"request join {username}")
+
+                state = WAIT_JOIN
+                continue
+
+            # ============================================================
+            # NON-BLOCKING MESSAGE RECEPTION (shared by most states)
+            # ============================================================
+            msg = None
             try:
-                # Try to read a message from the server without blocking.
-                # If no message is available, zmq.Again is raised and we fall through.
                 msg = sub_socket.recv_string(flags=zmq.NOBLOCK)
+            except zmq.Again:
+                pass
 
-                # Tokenize the incoming message for simple command parsing.
+            # If a message was received, parse it into tokens.
+            if msg:
                 tokens = msg.split()
+                if len(tokens) >= 2 and tokens[0] == "server/":
+                    cmd = tokens[1]
+                else:
+                    cmd = None
+            else:
+                cmd = None
 
-                if not tokens:
-                    # Defensive: skip empty messages.
+            # ============================================================
+            # STATE: WAIT_JOIN — waiting for server confirmation
+            # ============================================================
+            if state == WAIT_JOIN:
+                if cmd == "joined":
+                    print(f"Player joined: {tokens[-1]}")
+                    if tokens[-1] == username:
+                        print("You have successfully joined the game.")
+                        state = WAIT_START
+                elif cmd == "error":
+                    print("Server error before start.")
+                    state = GAME_OVER
+                time.sleep(0.05)
+                continue
+
+            # ============================================================
+            # STATE: WAIT_START — waiting for first board update + turn
+            # ============================================================
+            if state == WAIT_START:
+                if cmd == "update":
+                    board = msg.split("update ", 1)[1]
+                    print("\nGame Board:\n" + board)
+                elif cmd == "turn":
+                    player_turn = tokens[2]
+                    my_turn = player_turn == username
+                    if my_turn:
+                        state = MY_TURN
+                    else:
+                        state = WAIT_UPDATE
+                elif cmd == "error":
+                    print("Server error — disconnecting.")
+                    state = GAME_OVER
+                time.sleep(0.05)
+                continue
+
+            # ============================================================
+            # STATE: MY_TURN — prompt user for move or resign
+            # ============================================================
+            if state == MY_TURN:
+                move = input("Enter your move (col row) or 'resign': ").strip().lower()
+                if move == "resign":
+                    send_client_message(pub_socket, f"resign {username}")
+                    state = GAME_OVER
                     continue
 
-                # Many server examples send command tokens at the start of the line.
-                # Parse cmd as the first token and handle the known commands.
-                cmd = tokens[0]
+                try:
+                    col, row = map(int, move.split())
+                    if 0 <= col <= 2 and 0 <= row <= 2:
+                        send_client_message(pub_socket, f"{col} {row} {username}")
+                        state = WAIT_UPDATE
+                    else:
+                        print("Move must be between 0 and 2.")
+                except:
+                    print("Invalid move. Must be 'col row' or 'resign'.")
+                continue
 
-                if cmd == "joined":
-                    # Notification that a player joined; tokens[-1] holds the name.
-                    print(f"Player joined: {tokens[-1]}")
-
-                elif cmd == "update":
-                    # The 'update' message contains a multi-line ascii board after the token.
-                    # Using str.split(sep="update ", 1)[1] extracts the rest of the message.
-                    board = msg.split(sep="update ")[1]
+            # ============================================================
+            # STATE: WAIT_UPDATE — waiting for opponent move
+            # ============================================================
+            if state == WAIT_UPDATE:
+                if cmd == "update":
+                    board = msg.split("update ", 1)[1]
                     print("\nGame Board:\n" + board)
 
                 elif cmd == "turn":
-                    # Server announces whose turn it currently is.
-                    # Compare that name to our username to set local my_turn flag.
-                    # tokens[1] is expected to be the username in this message format.
-                    turn_name = tokens[1]
-                    my_turn = (turn_name == username)
+                    player_turn = tokens[2]
+                    my_turn = player_turn == username
                     if my_turn:
-                        print("It's your turn!")
-                    else:
-                        print("Please wait for the other player to make their move")
+                        state = MY_TURN
 
                 elif cmd == "won":
-                    # Server reports a winner; tokens[1] should be the winner's name.
-                    print(f"Game over! Winner: {tokens[1]}")
-                    running = False
+                    print(f"Game Over! Winner: {tokens[2]}")
+                    state = GAME_OVER
 
                 elif cmd == "draw":
-                    # Draw condition: no winner and no more moves.
                     print("Game ended in a draw.")
-                    running = False
+                    state = GAME_OVER
 
                 elif cmd == "error":
-                    # Server signaled an error condition; disconnect locally.
                     print("Server error — disconnecting.")
-                    running = False
+                    state = GAME_OVER
 
-            except zmq.Again:
-                # No message available right now; normal path. Continue to input handling.
-                pass
+                time.sleep(0.05)
+                continue
 
-            # If it's our turn, prompt the user for a move or 'resign'.
-            if my_turn:
-                # Request input from the user. This call blocks until the user responds.
-                move = input("Enter your move (col row) or 'resign': ").strip().lower()
-                if move == "resign":
-                    # Send a resign notification to the server and exit the game.
-                    pub_socket.send_string(f"resign {username}")
-                    running = False
-                    break
-                try:
-                    # Expect two integers separated by whitespace: col row
-                    col, row = map(int, move.split())
-                    # Validate the coordinates are inside 0..2 (3x3 board).
-                    if 0 <= col <= 2 and 0 <= row <= 2:
-                        # Send the move to the server in the expected "<col> <row> <username>" format.
-                        pub_socket.send_string(f"{col} {row} {username}")
-                        # After sending a move, the client typically waits for the server
-                        # to announce whose turn it is next; set my_turn to False.
-                        my_turn = False
-                    else:
-                        # Notify user of invalid coordinates and allow another attempt.
-                        print("Invalid move — must be between 0 and 2.")
-                except ValueError:
-                    # Input could not be parsed into two integers.
-                    print("Invalid input format. Use two numbers or 'resign'.")
-
-            # Small sleep to avoid a tight CPU-consuming loop when idle.
-            time.sleep(0.05)
+            # ============================================================
+            # STATE: GAME_OVER — exit loop
+            # ============================================================
+            if state == GAME_OVER:
+                running = False
+                continue
 
     except KeyboardInterrupt:
-        # Handle Ctrl-C gracefully: notify server of resignation before exiting.
-        print("\nExiting game.")
-        pub_socket.send_string(f"resign {username}")
-        running = False
+        print("\nExiting game...")
+        if pub_socket and username:
+            send_client_message(pub_socket, f"resign {username}")
+
     finally:
-        # Ensure ZMQ sockets and context are properly closed on exit.
-        pub_socket.close()
-        sub_socket.close()
-        context.term()
+        if pub_socket:
+            pub_socket.close()
+        if sub_socket:
+            sub_socket.close()
+        if context:
+            context.term()
+
 
 
 if __name__ == "__main__":

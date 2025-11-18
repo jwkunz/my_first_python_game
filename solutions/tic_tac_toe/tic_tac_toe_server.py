@@ -150,165 +150,210 @@ def main():
           broadcast for the next player; wins/draws result in "won"/"draw".
 
     If the server is started with the flag "--no_broadcast" it will not advertise its location
+    def main():
+
+    States:
+        WAITING_FOR_PLAYERS  – lobby state until 2 unique players join
+        START_GAME           – initializes GameState and assigns first turn
+        WAITING_FOR_MOVE     – waits for a valid message from the current player
+        PROCESS_MOVE         – validates and applies move; checks win/draw
+        GAME_OVER            – broadcasts result and exits loop
     """
+
+    # ---------------------------
+    # Initial Setup (unchanged)
+    # ---------------------------
     context = zmq.Context()
 
-    # Allow disabling UDP broadcast discovery via command-line flag.
-    # By default auto_discover is True; supply --no_broadcast to disable it.
-    auto_discover = True
-    if "--no_broadcast" in sys.argv[1:]:
-        auto_discover = False
-        print("Auto-discovery disabled via --no_broadcast")
-
-    # Ports chosen for the example; these may be changed if required.
-    port_to_broadcast = 41110      # UDP discovery port
-    port_to_clients = 41111        # TCP port where server PUB binds
-    port_from_clients = 41112      # TCP port where server SUB (receiving client PUBs) binds
+    auto_discover = "--no_broadcast" not in sys.argv[1:]
+    port_to_broadcast = 41110
+    port_to_clients = 41111
+    port_from_clients = 41112
 
     server_ip = get_local_ip()
 
-    # Create ZMQ sockets:
-    # - pub_socket: server publishes game events to connected clients.
-    # - sub_socket: server subscribes to client messages (clients publish).
     pub_socket = context.socket(zmq.PUB)
     sub_socket = context.socket(zmq.SUB)
 
-    # Bind sockets so clients can connect using tcp://<server_ip>:<port>
     pub_socket.bind(f"tcp://*:{port_to_clients}")
     sub_socket.bind(f"tcp://*:{port_from_clients}")
-    # We only care about messages that start with "client/".
     sub_socket.setsockopt_string(zmq.SUBSCRIBE, "client/")
 
+    stop_flag = {"stop": False}
     if auto_discover:
         print(f"Server broadcasting information for {server_ip}")
-
-        # Start a background thread to periodically broadcast server discovery info.
-        stop_flag = {"stop": False}
         broadcaster = Thread(
             target=broadcast_ip,
-            args=("255.255.255.255", port_to_broadcast, server_ip, port_to_clients, port_from_clients, stop_flag)
+            args=("255.255.255.255",
+                  port_to_broadcast,
+                  server_ip,
+                  port_to_clients,
+                  port_from_clients,
+                  stop_flag)
         )
         broadcaster.daemon = True
         broadcaster.start()
 
-    print("Waiting for two players to join...")
+    # ---------------------------
+    # State Machine Variables
+    # ---------------------------
+    WAITING_FOR_PLAYERS = "WAITING_FOR_PLAYERS"
+    START_GAME          = "START_GAME"
+    WAITING_FOR_MOVE    = "WAITING_FOR_MOVE"
+    PROCESS_MOVE        = "PROCESS_MOVE"
+    GAME_OVER           = "GAME_OVER"
 
-    players = []    # list of joined usernames, order indicates assigned team until shuffle
-    game = None     # GameState instance once two players have joined
-    turn_index = 0  # index into players for whose turn it is
+    state = WAITING_FOR_PLAYERS
+
+    players = []
+    turn_index = 0
+    game = None
+    last_message = None  # storage for the move/resign just received
+
+    print("Waiting for two players to join...")
 
     try:
         while True:
-            # Block waiting for the next client message. This simple server uses
-            # a blocking recv; the design is straightforward for this example.
-            msg = sub_socket.recv_string()
-            tokens = msg.split()
-            if not tokens:
-                continue
 
-            # The protocol expects tokens like: ["client/", "request", "join", "<username>"]
-            cmd = tokens[1]
+            # =====================================================
+            # ---------------- WAITING_FOR_PLAYERS ----------------
+            # =====================================================
+            if state == WAITING_FOR_PLAYERS:
+                msg = sub_socket.recv_string()
+                tokens = msg.split()
+                if not tokens:
+                    continue
 
-            # ----- Handle join requests -----
-            if cmd == "request" and len(tokens) >= 4 and tokens[2] == "join":
-                username = tokens[3]
-                # Add unique players only.
-                if username not in players:
-                    players.append(username)
-                    send_server_message(pub_socket, f"joined {username}")
-                    print(f"{username} joined the game.")
-                # When two players are available, initialize game and notify clients.
-                if len(players) == 2 and game is None:
-                    game = GameState()
-                    print("Both players connected. Starting game!")
-                    # Randomize player order (which player is X/O) for fairness.
-                    random.seed(time.time_ns())
-                    random.shuffle(players)
-                    # Broadcast initial board and who has the first turn.
-                    send_server_message(pub_socket, f"update {str(game)}")
-                    send_server_message(pub_socket, f"turn {players[turn_index]}")
-                continue
+                if tokens[1] == "request" and tokens[2] == "join":
+                    username = tokens[3]
+                    if username not in players:
+                        players.append(username)
+                        send_server_message(pub_socket, f"joined {username}")
+                        print(f"{username} joined the game.")
 
-            # ----- Handle resignations -----
-            if cmd == "resign" and len(tokens) == 3:
-                username = tokens[2]
-                print(f"{username} resigned")
-                # If two players were playing, the other player wins immediately.
-                if (username in players) and (len(players) == 2):
-                    winner = players[1] if username == players[0] else players[0]
-                    send_server_message(pub_socket, f"won {winner}")
-                    print(f"{winner} wins!")
-                    break
-                else:
-                    # If less than two players or not recognized, reset the lobby.
+                    if len(players) == 2:
+                        state = START_GAME
+                    continue
+
+                # A resign during lobby resets lobby.
+                if tokens[1] == "resign":
+                    print("Resignation received during lobby; resetting lobby.")
                     players = []
                     continue
 
-            # ----- Ignore messages until the game exists and two players are present -----
-            if not game or len(players) < 2:
+            # =====================================================
+            # ---------------------- START_GAME -------------------
+            # =====================================================
+            if state == START_GAME:
+                game = GameState()
+                random.shuffle(players)
+                turn_index = 0
+
+                print("Both players connected. Starting game!")
+                send_server_message(pub_socket, f"update {str(game)}")
+                send_server_message(pub_socket, f"turn {players[turn_index]}")
+
+                state = WAITING_FOR_MOVE
                 continue
 
-            # ----- Handle move submissions -----
-            # Clients are expected to send a move as: "client/ <col> <row> <username>"
-            if len(tokens) == 4:
-                try:
-                    col = int(tokens[1])
-                    row = int(tokens[2])
-                    username = tokens[3]
+            # =====================================================
+            # -------------------- WAITING_FOR_MOVE ---------------
+            # =====================================================
+            if state == WAITING_FOR_MOVE:
+                msg = sub_socket.recv_string()
+                tokens = msg.split()
+                last_message = tokens   # pass message to next state
 
-                    # Enforce turn-taking: ignore moves from the player whose turn it is not.
+                # Resignation is handled immediately
+                if tokens[1] == "resign":
+                    username = tokens[2]
+                    print(f"{username} resigned.")
+                    winner = players[1] if username == players[0] else players[0]
+                    send_server_message(pub_socket, f"won {winner}")
+                    state = GAME_OVER
+                    continue
+
+                # Moves must have 4 tokens: client/ col row username
+                if len(tokens) == 4:
+                    state = PROCESS_MOVE
+                    continue
+
+                # Ignore any other input
+                continue
+
+            # =====================================================
+            # --------------------- PROCESS_MOVE -----------------
+            # =====================================================
+            if state == PROCESS_MOVE:
+                try:
+                    col = int(last_message[1])
+                    row = int(last_message[2])
+                    username = last_message[3]
+
+                    # Enforce whose turn it is
                     if username != players[turn_index]:
+                        state = WAITING_FOR_MOVE
                         continue
 
-                    # Apply move to GameState; GameState.make_move returns True if valid.
+                    # Apply the move
                     valid = game.make_move(col, row)
                     if not valid:
-                        # Invalid move -> treated as an immediate loss for the submitter.
                         winner = players[1] if username == players[0] else players[0]
                         send_server_message(pub_socket, f"won {winner}")
-                        print(f"{username} made an invalid move. {winner} wins!")
-                        break
+                        print(f"Invalid move by {username}. {winner} wins!")
+                        state = GAME_OVER
+                        continue
 
-                    # Broadcast the updated board drawing to all clients.
+                    # Board update
                     send_server_message(pub_socket, f"update {str(game)}")
 
-                    # Check for a winning condition.
+                    # Win check
                     if game.inspect_win():
                         winner = players[turn_index]
                         send_server_message(pub_socket, f"won {winner}")
                         print(f"{winner} wins!")
-                        break
+                        state = GAME_OVER
+                        continue
 
-                    # Check for draw condition (full board without winner).
+                    # Draw check
                     if game.inspect_draw():
                         send_server_message(pub_socket, "draw")
                         print("Game ended in a draw.")
-                        break
+                        state = GAME_OVER
+                        continue
 
-                    # Advance turn to the other player and notify clients.
+                    # Next turn
                     turn_index = 1 - turn_index
                     send_server_message(pub_socket, f"turn {players[turn_index]}")
 
+                    state = WAITING_FOR_MOVE
+
                 except Exception as e:
-                    # If any error occurs while processing a move, notify clients and exit.
                     print("Error processing move:", e)
                     send_server_message(pub_socket, "error disconnect")
-                    break
+                    state = GAME_OVER
+
+                continue
+
+            # =====================================================
+            # ---------------------- GAME_OVER --------------------
+            # =====================================================
+            if state == GAME_OVER:
+                break
 
     except KeyboardInterrupt:
-        # Graceful shutdown requested by operator.
         print("Server shutting down gracefully.")
         send_server_message(pub_socket, "error disconnect")
+
     except Exception as e:
-        # Unexpected exception; log and notify clients before stopping.
         print(f"Server error: {e}")
         send_server_message(pub_socket, "error disconnect")
+
     finally:
-        # Ensure resources are released and background thread signalled to stop.
         stop_flag["stop"] = True
-        time.sleep(0.1)  # give broadcast thread a moment to close
-        sub_socket.close()
+        time.sleep(0.1)
         pub_socket.close()
+        sub_socket.close()
         context.term()
 
 

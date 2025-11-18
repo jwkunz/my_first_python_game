@@ -135,128 +135,203 @@ def main():
 
     The loop uses non-blocking SUB recv and short sleeps to remain responsive.
     KeyboardInterrupt (Ctrl-C) is handled to gracefully resign and close sockets.
+
+    Terminal-mode client implemented as a clean state machine.
+
+    States:
+        DISCOVER     – find server via UDP broadcast
+        CONNECT      – set up sockets and send join request
+        WAIT_JOIN    – wait for 'joined <username>' confirmation
+        WAIT_START   – wait for first 'update' & 'turn' messages
+        MY_TURN      – prompt user for move; send move/resign
+        WAIT_UPDATE  – waiting for other player's move
+        GAME_OVER    – print result and exit
     """
-    port_to_broadcast = 41110
 
-    # Discover server via LAN broadcast. If not found, exit early.
-    server_ip, port_to_clients, port_from_clients = discover_server(port_to_broadcast)
-    if not server_ip:
-        print("No server found. Exiting.")
-        return
-    print(f"Found server at {server_ip}")
+    # -------------------------------
+    # State enumeration
+    # -------------------------------
 
-    # Prompt the user for a username (trim whitespace).
-    username = input("Enter your username: ").strip()
+    DISCOVER, CONNECT, WAIT_JOIN, WAIT_START, MY_TURN, WAIT_UPDATE, GAME_OVER = range(7)
 
-    # Set up ZeroMQ context and sockets:
-    # - PUB socket: used to send client messages to server (connect to port_from_clients).
-    # - SUB socket: used to receive server broadcasts/updates (connect to port_to_clients).
-    context = zmq.Context()
-    pub_socket = context.socket(zmq.PUB)
-    sub_socket = context.socket(zmq.SUB)
-
-    # Connect to the discovered endpoints. Use tcp://<ip>:<port>.
-    pub_socket.connect(f"tcp://{server_ip}:{port_from_clients}")
-    sub_socket.connect(f"tcp://{server_ip}:{port_to_clients}")
-    # Only receive messages whose topic begins with "server/".
-    sub_socket.setsockopt_string(zmq.SUBSCRIBE, "server/")
-
-    print("Connecting to server...")
-    # Short sleep gives the server a moment to process a new connection in simple setups.
-    time.sleep(0.5)
-    # Request to join the game.
-    send_client_message(pub_socket, f"request join {username}")
-
-    # State variables for the main loop.
-    my_turn = False
+    state = DISCOVER
     running = True
+    username = None
+
+    context = None
+    pub_socket = None
+    sub_socket = None
+
+    server_ip = None
+    port_to_clients = None
+    port_from_clients = None
+
+    port_to_broadcast = 41110
+    my_turn = False
+
+    print("=== Tic Tac Toe Client ===")
 
     try:
         while running:
+
+            # ============================================================
+            # STATE: DISCOVER — find the server using UDP broadcast
+            # ============================================================
+            if state == DISCOVER:
+                server_ip, port_to_clients, port_from_clients = discover_server(port_to_broadcast)
+                if not server_ip:
+                    print("No server found. Exiting.")
+                    return
+                print(f"Server discovered at: {server_ip}")
+                state = CONNECT
+                continue
+
+            # ============================================================
+            # STATE: CONNECT — set up sockets and send join request
+            # ============================================================
+            if state == CONNECT:
+                username = input("Enter your username: ").strip()
+
+                context = zmq.Context()
+                pub_socket = context.socket(zmq.PUB)
+                sub_socket = context.socket(zmq.SUB)
+
+                pub_socket.connect(f"tcp://{server_ip}:{port_from_clients}")
+                sub_socket.connect(f"tcp://{server_ip}:{port_to_clients}")
+
+                sub_socket.setsockopt_string(zmq.SUBSCRIBE, "server/")
+
+                print("Connecting to server...")
+                time.sleep(0.5)
+                send_client_message(pub_socket, f"request join {username}")
+
+                state = WAIT_JOIN
+                continue
+
+            # ============================================================
+            # NON-BLOCKING MESSAGE RECEPTION (shared by most states)
+            # ============================================================
+            msg = None
             try:
-                # Attempt to receive an incoming message without blocking.
-                # If no message is available, zmq.Again is raised and we continue.
                 msg = sub_socket.recv_string(flags=zmq.NOBLOCK)
+            except zmq.Again:
+                pass
 
-                # Basic parsing: split into tokens by whitespace.
+            # If a message was received, parse it into tokens.
+            if msg:
                 tokens = msg.split()
-                if not tokens:
-                    continue
-                cmd = tokens[1]
+                if len(tokens) >= 2 and tokens[0] == "server/":
+                    cmd = tokens[1]
+                else:
+                    cmd = None
+            else:
+                cmd = None
 
+            # ============================================================
+            # STATE: WAIT_JOIN — waiting for server confirmation
+            # ============================================================
+            if state == WAIT_JOIN:
                 if cmd == "joined":
-                    # Inform user that a player joined (usually one of the two players).
                     print(f"Player joined: {tokens[-1]}")
+                    if tokens[-1] == username:
+                        print("You have successfully joined the game.")
+                        state = WAIT_START
+                elif cmd == "error":
+                    print("Server error before start.")
+                    state = GAME_OVER
+                time.sleep(0.05)
+                continue
 
-                elif cmd == "update":
-                    # Server sends a drawn board after 'update '. Preserve formatting.
-                    board = msg.split(sep="update ")[1]
+            # ============================================================
+            # STATE: WAIT_START — waiting for first board update + turn
+            # ============================================================
+            if state == WAIT_START:
+                if cmd == "update":
+                    board = msg.split("update ", 1)[1]
+                    print("\nGame Board:\n" + board)
+                elif cmd == "turn":
+                    player_turn = tokens[2]
+                    my_turn = player_turn == username
+                    if my_turn:
+                        state = MY_TURN
+                    else:
+                        state = WAIT_UPDATE
+                elif cmd == "error":
+                    print("Server error — disconnecting.")
+                    state = GAME_OVER
+                time.sleep(0.05)
+                continue
+
+            # ============================================================
+            # STATE: MY_TURN — prompt user for move or resign
+            # ============================================================
+            if state == MY_TURN:
+                move = input("Enter your move (col row) or 'resign': ").strip().lower()
+                if move == "resign":
+                    send_client_message(pub_socket, f"resign {username}")
+                    state = GAME_OVER
+                    continue
+
+                try:
+                    col, row = map(int, move.split())
+                    if 0 <= col <= 2 and 0 <= row <= 2:
+                        send_client_message(pub_socket, f"{col} {row} {username}")
+                        state = WAIT_UPDATE
+                    else:
+                        print("Move must be between 0 and 2.")
+                except:
+                    print("Invalid move. Must be 'col row' or 'resign'.")
+                continue
+
+            # ============================================================
+            # STATE: WAIT_UPDATE — waiting for opponent move
+            # ============================================================
+            if state == WAIT_UPDATE:
+                if cmd == "update":
+                    board = msg.split("update ", 1)[1]
                     print("\nGame Board:\n" + board)
 
                 elif cmd == "turn":
-                    # Server announces whose turn it is. Compare to local username.
-                    turn_name = tokens[2]
-                    my_turn = (turn_name == username)
+                    player_turn = tokens[2]
+                    my_turn = player_turn == username
                     if my_turn:
-                        print("It's your turn!")
-                    else:
-                        print("Please wait for the other player to make their move")
+                        state = MY_TURN
 
                 elif cmd == "won":
-                    # A player won the game; print winner and stop running.
-                    print(f"Game over! Winner: {tokens[2]}")
-                    running = False
+                    print(f"Game Over! Winner: {tokens[2]}")
+                    state = GAME_OVER
 
                 elif cmd == "draw":
-                    # The game ended in a draw.
                     print("Game ended in a draw.")
-                    running = False
+                    state = GAME_OVER
 
                 elif cmd == "error":
-                    # An error occurred on the server; exit.
                     print("Server error — disconnecting.")
-                    running = False
+                    state = GAME_OVER
 
-            except zmq.Again:
-                # No message available this iteration; proceed to input handling.
-                pass
+                time.sleep(0.05)
+                continue
 
-            # If it is this client's turn, prompt user for move or resign.
-            if my_turn:
-                # Read input; accept "resign" or "<col> <row>".
-                move = input("Enter your move (col row) or 'resign': ").strip().lower()
-                if move == "resign":
-                    # Notify server of resignation and exit the loop.
-                    send_client_message(pub_socket, f"resign {username}")
-                    running = False
-                    break
-                try:
-                    # Parse two integers separated by whitespace.
-                    col, row = map(int, move.split())
-                    # Validate the coordinates are within 0..2.
-                    if 0 <= col <= 2 and 0 <= row <= 2:
-                        send_client_message(pub_socket, f"{col} {row} {username}")
-                        # After sending a move, wait for server to reply (no longer my turn).
-                        my_turn = False
-                    else:
-                        print("Invalid move — must be between 0 and 2.")
-                except ValueError:
-                    # Input not parseable as two integers.
-                    print("Invalid input format. Use two numbers or 'resign'.")
-
-            # Small sleep to avoid a tight loop; keeps CPU usage reasonable.
-            time.sleep(0.05)
+            # ============================================================
+            # STATE: GAME_OVER — exit loop
+            # ============================================================
+            if state == GAME_OVER:
+                running = False
+                continue
 
     except KeyboardInterrupt:
-        # Graceful shutdown on Ctrl-C: notify server of resignation.
-        print("\nExiting game.")
-        send_client_message(pub_socket, f"resign {username}")
-        running = False
+        print("\nExiting game...")
+        if pub_socket and username:
+            send_client_message(pub_socket, f"resign {username}")
+
     finally:
-        # Ensure sockets and context are closed on exit.
-        pub_socket.close()
-        sub_socket.close()
-        context.term()
+        if pub_socket:
+            pub_socket.close()
+        if sub_socket:
+            sub_socket.close()
+        if context:
+            context.term()
+
 
 
 if __name__ == "__main__":
