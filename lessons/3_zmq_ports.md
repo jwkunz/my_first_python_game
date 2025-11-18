@@ -12,7 +12,7 @@
 
 ## Scope
 
-* Beginner students grades 7 - 12 with no prior programming expierence  
+* Students with a basic understanding of the python language 
 * 15 minutes of reading
 * 15-30 minutes of lab
 
